@@ -2,11 +2,12 @@
 # -*- coding : utf-8 -*-
 # vim:fenc=utf-8
 # name : mirrorage.py
-# Copyright (c) 2018/ author : R.Otani
-# since 2018 -
+# Copyright (c) 2019/ author : R.O a.k.a last_scene
+# since 2019 -
 # Distributed under terms of the MIT license.
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 
@@ -34,11 +35,6 @@ from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import functools
 import sys
 import re
-try:
-    import maya.cmds
-except ImportError:
-    import traceback
-    traceback.print_exc()
 
 from collections import OrderedDict
 
@@ -62,8 +58,18 @@ ANIMS = ('animCurveTL', 'animCurveTA', 'animCurveTU')
 class MirrorAnimationCmd(object):
     pass
 
-class MirrorAnimationGUI(object):
-    pass
+class MirrorAnimationGUI(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
+    title   = 'Mirrorage'
+    winName = 'MirrorageWidget'
+    
+    def __init__(self, parent=None):
+        super(MirrorAnimationGUI, self).__init__()
+
+        if pm.window(self.winName, q=1, ex=1):
+            pm.deleteUI(self.winName)
+        self.setObjectName(self.winName)
+        #TODO
+
 
 def leftSide(node):
     global RE_LEFT_SIDE
@@ -110,7 +116,7 @@ def findSide(nodes, reSides, **kwargs):
         if m:
             return m.group(), True
         else:
-            return '', ''
+            return '', False
 
 
 def findSideDict(side, switch):
@@ -126,7 +132,6 @@ def findSideDict(side, switch):
 
 def mirrorPlanes(mp='YZ', upAxis='Y'):
     """
-    :rtype: str | None
     """
     if upAxis == 'Y':
         YZ = [ -1,  1,  1 ]
@@ -164,23 +169,15 @@ def isAttrMirrored(attr, mirrorAxis):
     
     
 def mirrorObject(src, **kwargs):
+    """this is Return the other/opposite side for the given name.
     """
-    Return the other/opposite side for the given name.
+    left,  id1  = leftSide(src)
+    right, id2  = rightSide(src)
     
-    Example:
-        print self.mirrorObject("FKSholder_L")
-        # FKShoulder_R
-    
-    :type srcObj: str
-    :rtype: str or None
-    """
-    left, id1 = leftSide(src)
-    right, id2 = rightSide(src)
-    
-    if id1 == '':
+    if not id1:
         reside = findSideDict(right, 2)
         dst = src.replace(right, reside)
-    elif id2 == '':
+    elif not id2:
         reside = findSideDict(left, 1)
         dst = src.replace(left, reside)
     else:
@@ -228,27 +225,31 @@ def getPy(arg):
 
 def getAnimCurve(node, at, **kwargs):
     """this is get animCurve node from node name + attr name.
+
     Parameters
     ----------
-    animCurve : str or object
-        animCurve.
+    node : str or object
+        get animCurve node has keyframe object.
+    
+    at   : str or object
+        attribute.
 
     Returns
     -------
     object
-        got keyframe has time and value dictonary.
+        animCurve node.
     
     """
     global ANIMS
     
-    node = getPy(node)
+    node     = getPy(node)
     fullname = node.attr(at)
     con = pm.listConnections(fullname, d=0, s=1)
     if len(con) > 0 :
         if [ pm.nodeType(con[0]) == x for x in ANIMS ] :
             return con[0]
     else:
-        pm.warning('# animCurve node does not exist. skip.')
+        pm.displayWarning('# animCurve node does not exist. skip.')
         return None
 
 
@@ -267,7 +268,7 @@ def getKeyTimeValue(animCurve, **kwargs):
     
     """
     animCurve = getPy(animCurve)
-    indices = animCurve.attr('ktv').get(mi=True)
+    indices   = animCurve.attr('ktv').get(mi=True)
 
     return OrderedDict( animCurve.attr('ktv[{}]'.format(i) ).get() for i in indices )
 
@@ -290,7 +291,7 @@ def extractKeyIndexTimeValue(dic={0 : 0}, frameRange=(0, 30), **kwargs):
     """
     
     range_idtv = OrderedDict()
-    st, end = frameRange
+    st, end    = frameRange
     
     idx = 0
     for t, v in dic.items():
@@ -407,7 +408,6 @@ def getTimeRangeFromNode(node='', t=True, r=True, s=False, frameRange=(None,None
     minTime, maxTime = frameRange
     
     for anim_curve in anim_curves:
-        print(anim_curve)
         indices = anim_curve.attr('ktv').get(mi=True)
         for i in indices:
             k , _ = anim_curve.attr('ktv[{}]'.format(i)).get()
@@ -427,13 +427,12 @@ def setAttr(name, attr, value, mirrorAxis=None):
     name        : str or object
                 
     attr        : str or object
-                translate on.
                 
-    value      : list[ str ]
-                mirror target attribute.
+    value       : list[ str ]
+                    mirror target attribute.
                 
-    mirrorAxis : list[ int ]
-                mirroring axis list.
+    mirrorAxis  : list[ int ]
+                    mirroring axis list.
 
     Returns
     -------
@@ -506,7 +505,7 @@ def transferAnimation(src, dst, attrs=None, mirrorAxis=[], time=(None, None), **
         
                 
 def checkDouble3(t=True, r=True, s=False, **kwargs):
-    """this is  return double3 standard keyable transform attribute.
+    """this is Return double3 standard keyable transform attributes.
     
     Parameters
     ----------
@@ -534,25 +533,34 @@ def checkDouble3(t=True, r=True, s=False, **kwargs):
     return attrs
 
 
-def mirrorAnimation(node='', t=True, r=True, s=False, value=True, frameRange=(None, None), upAxis='Y', **kwargs):
+def mirrorAnimation(node='', t=True, r=True, s=False, value=True, frameRange=(None, None), **kwargs):
     """this is mirror value for animation object.
        Choose either value base scale mode or time base scale mode. 
 
     Parameters
     ----------
-    node  : str or object
+    node        : str or object
                 
-    t     : bool
-                translate on.
+    t           : bool
+                    translate on.
                 
-    r     : bool
-                rotate on.
+    r           : bool
+                    rotate on.
                 
-    s     : bool
-                scale on.
+    s           : bool
+                    scale on.
                 
-    value : bool
-                if True, value based scale. elif of, time scale based
+    value       : bool
+                    if True, value based scale. elif of, time based scale.
+
+    frameRange  : tupple(int , int)
+                    effective time range.
+    
+    mirrorAxis  : list[int, int, int]
+                    mirror directions.
+    
+    mirrorPlane : string
+                    mirror plane.
 
     Returns
     -------
@@ -564,24 +572,24 @@ def mirrorAnimation(node='', t=True, r=True, s=False, value=True, frameRange=(No
     
     if node == '':
         node = pm.selected()[0]
-    node       = getPy(node)
+    node        = getPy(node)
     
-    dstSide    = mirrorObject(node.name())
+    dstSide     = mirrorObject(node.name())
     if dstSide == '':
         raise
-    dstSide    = getPy(dstSide)
+    dstSide     = getPy(dstSide)
     
-    st, end    = frameRange
-    allrange   = False
+    st, end     = frameRange
+    allrange    = False
     
     if not frameRange[0] or not frameRange[1]:
         allrange = True
-        
-    mirror     = mirrorPlanes(mirrorPlane, upAxis)
-    attrs      = checkDouble3(t, r, s)
-    keyTimes   = getNextKeyframe(node, attrs)
-    minTime = st
-    maxTime = end
+    
+    #mirror      = mirrorPlanes(mirrorPlane, upAxis)
+    attrs       = checkDouble3(t, r, s)
+    keyTimes    = getNextKeyframe(node, attrs)
+    minTime     = st
+    maxTime     = end
     if not allrange:
         for kt in keyTimes:
             if frameRange[0] <= kt:
@@ -597,15 +605,13 @@ def mirrorAnimation(node='', t=True, r=True, s=False, value=True, frameRange=(No
         rng = (st, end)
         minTime, maxTime = getTimeRangeFromNode( node, t=t, r=r, s=s, frameRange=rng )
 
-    if not t and r and s:
-        transferAnimation(node, dstSide, attrs, mirrorAxis=mirrorAxis, time=(minTime, maxTime))
+    if value:
+        if not t and not r and not s:
+            pm.displayWarning('# Error no -t -r -s flags. Skip evaluate.')
+            return
+        else:
+            transferAnimation(node, dstSide, attrs, mirrorAxis=mirrorAxis, time=(minTime, maxTime))
     else:
-        transferAnimation(node, dstSide, attrs, mirrorAxis=mirrorAxis, time=(minTime, maxTime))
-
-'''
-    attrs = ['translateX', 'translateY', 'translateZ']
-    for i in range(len(attrs)):
-        if mirror[i] == -1:
-            #cutKey()
-            scaleKey(node, attrs[i], value, frameRange=(st, end))
-'''
+        for i in range(len(attrs)):
+            if mirrorAxis[i] == -1:
+                scaleKey(node, attrs[i], value, frameRange=(minTime, maxTime))

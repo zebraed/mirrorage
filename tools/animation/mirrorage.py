@@ -2,7 +2,7 @@
 # -*- coding : utf-8 -*-
 # vim:fenc=utf-8
 # name : mirrorage.py
-# Copyright (c) 2019/ author : R.O a.k.a last_scene
+# Copyright (c) 2019 / author : R.O a.k.a last_scene
 # since 2019 -
 # Distributed under terms of the MIT license.
 
@@ -16,20 +16,8 @@ import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
 
-import imp
-try:
-    imp.find_module('PySide2')
-    import PySide2.QtWidgets as QtWidgets
-    import PySide2.QtGui as QtGui
-    import PySide2.QtCore as QtCore
-except ImportError:
-    import PySide.QtGui as QtGui
-    import PySide.QtCore as QtCore
-try:
-    imp.find_module("shiboken2")
-    import shiboken2 as shiboken
-except ImportError:
-    import shiboken
+from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
 import functools
@@ -38,7 +26,9 @@ import re
 
 from collections import OrderedDict
 
-__mod__ = ()
+from .. import widget
+
+__mod__ = (widget)
 ( reload(_m) for _m in __mod__ )
 
 #mirror table
@@ -58,17 +48,20 @@ ANIMS = ('animCurveTL', 'animCurveTA', 'animCurveTU')
 class MirrorAnimationCmd(object):
     pass
 
-class MirrorAnimationGUI(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
-    title   = 'Mirrorage'
-    winName = 'MirrorageWidget'
-    
-    def __init__(self, parent=None):
-        super(MirrorAnimationGUI, self).__init__()
 
-        if pm.window(self.winName, q=1, ex=1):
-            pm.deleteUI(self.winName)
-        self.setObjectName(self.winName)
-        #TODO
+class MirrorAnimationGUI(widget.BaseWidget):
+    title   = 'Mirrorage'
+    winName = 'MirrorageGUI'
+
+    def closeEvent(self, event):
+        super(widget.BaseWidget, self).closeEvent(event)
+
+    def setLayout(self, mainWidget):
+        self.addHelpDoc(__file__)
+        mainVL = QtWidgets.QVBoxLayout()
+        mainWidget.setLayout(mainVL)
+
+
 
 
 def leftSide(node):

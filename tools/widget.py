@@ -17,6 +17,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
+import maya.OpenMayaUI as omUI
 
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
 
@@ -27,6 +28,9 @@ import sys
 import functools
 import subprocess
 import platform
+
+maya_ver = int(cmds.about(v=1)[:4])
+maya_api_ver = int(cmds.about(api=1))
 
 
 def undo(func):
@@ -102,3 +106,26 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
     #=================
     def setLayout(self, mainWidget):
         pass
+
+
+class SubWidget(BaseWidget):
+    def __init__(self, *args, **kwargs):
+        super(SubWidget, self).__init__(*args, **kwargs)
+    
+
+class RightClickButton(QtWidgets.QPushButton):
+    rightClicked = QtCore.Signal()
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.RightButton:
+            self.rightClicked.emit()
+        else:
+            super(self.__class__, self).mouseReleaseEvent(event)
+
+
+def separator(bold=1, style='solid', color='#aaa'):
+    lbl   = QtWidgets.QLabel()
+    style = 'QLabel{border: ' + '{bold}px solid {color}; border-style: nonoe none {style} node; font-size:2px;'\
+    .format(bold=bold, style=style, color=color) + '}'
+    lbl.setStyleSheet(style)
+    return lbl
+    

@@ -16,7 +16,13 @@ import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
 
+<<<<<<< Updated upstream:tools/animation/mirrorage.py
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+=======
+from Qt import QtWidgets
+from Qt import QtCore
+from Qt import QtGui
+>>>>>>> Stashed changes:tools/mirrorage.py
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
@@ -26,10 +32,15 @@ import re
 
 from collections import OrderedDict
 
+<<<<<<< Updated upstream:tools/animation/mirrorage.py
 from .. import widget
 
 __mod__ = (widget)
 ( reload(_m) for _m in __mod__ )
+=======
+#__mod__ = ()
+#( reload(_m) for _m in __mod__ )
+>>>>>>> Stashed changes:tools/mirrorage.py
 
 #mirror table
 RE_LEFT_SIDE  = 'Lf|lf_|_lf|_l_|_L|L_|left|Left'
@@ -237,10 +248,10 @@ def getAnimCurve(node, at, **kwargs):
     
     node     = getPy(node)
     fullname = node.attr(at)
-    con = pm.listConnections(fullname, d=0, s=1)
+    con      = pm.listConnections(fullname, d=0, s=1)[0]
     if len(con) > 0 :
-        if [ pm.nodeType(con[0]) == x for x in ANIMS ] :
-            return con[0]
+        if [ pm.nodeType(con) == x for x in ANIMS ] :
+            return con
     else:
         pm.displayWarning('# animCurve node does not exist. skip.')
         return None
@@ -256,7 +267,7 @@ def getKeyTimeValue(animCurve, **kwargs):
 
     Returns
     -------
-    dict
+    dict(orderDict)
         got keyframe has time and value dictonary.
     
     """
@@ -272,9 +283,10 @@ def extractKeyIndexTimeValue(dic={0 : 0}, frameRange=(0, 30), **kwargs):
     Parameters
     ----------
     dic        : dict(in int or float)
-        key = time, value = value.
+                    key = time, value = value.
+
     frameRange : tupple(in int or float)
-        input spicifid range of frameRange.
+                    input spicifid range of frameRange.
 
     Returns
     -------
@@ -598,13 +610,16 @@ def mirrorAnimation(node='', t=True, r=True, s=False, value=True, frameRange=(No
         rng = (st, end)
         minTime, maxTime = getTimeRangeFromNode( node, t=t, r=r, s=s, frameRange=rng )
 
-    if value:
+    if value: #value based scale
         if not t and not r and not s:
             pm.displayWarning('# Error no -t -r -s flags. Skip evaluate.')
             return
         else:
             transferAnimation(node, dstSide, attrs, mirrorAxis=mirrorAxis, time=(minTime, maxTime))
-    else:
+    else: #time based scale
         for i in range(len(attrs)):
             if mirrorAxis[i] == -1:
                 scaleKey(node, attrs[i], value, frameRange=(minTime, maxTime))
+
+def mirrorDrivenKey():
+    pass

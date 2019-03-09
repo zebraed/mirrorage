@@ -67,7 +67,7 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_AlwaysShowToolTips)
 
         setting_file = os.path.join(os.getenv('MAYA_APP_DIR'), 'mirrorage_windowPref.ini')
-        self.pyside_setting = QtCore.QSetting(setting_file, QtCore.QSettigns.InitFormat)
+        self.pyside_setting = QtCore.QSettings(setting_file, QtCore.QSettings.IniFormat)
         self.pyside_setting.setIniCodec('utf-8')
 
     def restore(self):

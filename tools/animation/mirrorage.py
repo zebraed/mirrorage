@@ -16,13 +16,7 @@ import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
 
-<<<<<<< Updated upstream:tools/animation/mirrorage.py
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
-=======
-from Qt import QtWidgets
-from Qt import QtCore
-from Qt import QtGui
->>>>>>> Stashed changes:tools/mirrorage.py
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
@@ -32,15 +26,10 @@ import re
 
 from collections import OrderedDict
 
-<<<<<<< Updated upstream:tools/animation/mirrorage.py
 from .. import widget
 
 __mod__ = (widget)
 ( reload(_m) for _m in __mod__ )
-=======
-#__mod__ = ()
-#( reload(_m) for _m in __mod__ )
->>>>>>> Stashed changes:tools/mirrorage.py
 
 #mirror table
 RE_LEFT_SIDE  = 'Lf|lf_|_lf|_l_|_L|L_|left|Left'

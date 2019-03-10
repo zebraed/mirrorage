@@ -62,8 +62,6 @@ class MirrorAnimationGUI(widget.BaseWidget):
         mainWidget.setLayout(mainVL)
 
 
-
-
 def leftSide(node):
     global RE_LEFT_SIDE
     return findSide([node], RE_LEFT_SIDE)
@@ -80,7 +78,7 @@ def isLeftSide(name):
     
 
 def isRightSide(name):
-    side = RightSide(name)
+    side = rightSide(name)
     return matchSide(name, side)
 
 

@@ -29,7 +29,8 @@ import functools
 import subprocess
 import platform
 
-from . import utils as utils
+from .. import utils as utils
+
 
 maya_ver = int(cmds.about(v=1)[:4])
 maya_api_ver = int(cmds.about(api=1))
@@ -143,7 +144,7 @@ def separator(bold=1, style='solid', color='#aaa'):
 
 
 def radioButtonGrp(nrb=2, l='sample :', sl=1, **kwargs):
-    HL  = Qt.widgets.QHBoxLayout()
+    HL  = QtWidgets.QHBoxLayout()
     lbl = QtWidgets.QLabel(l, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
     HL.addWidget(lbl)
 

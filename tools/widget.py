@@ -29,6 +29,8 @@ import functools
 import subprocess
 import platform
 
+from . import utils as utils
+
 maya_ver = int(cmds.about(v=1)[:4])
 maya_api_ver = int(cmds.about(api=1))
 
@@ -101,6 +103,16 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
         elif pl == 'Linux':
             subprocess.call(['gedit-open', file_path])
     
+    def setAnimationSize(self, **kwargs):
+        #utils.getFlag(kwargs, [])
+        self.anim = QtCore.QPropertyAnimation(self, 'geometry')
+        self.anim.setEasingCurve(QtCore.QEasingCurve.InOutQuint)
+        x = self.geometry().x()
+        y = self.geometry().y()
+
+        self.anim.setEndValue(QtCore.QRect(x, y, wid, hei))
+        self.anim.start()
+    
     #================#
     #virtual function#
     #=================
@@ -128,4 +140,37 @@ def separator(bold=1, style='solid', color='#aaa'):
     .format(bold=bold, style=style, color=color) + '}'
     lbl.setStyleSheet(style)
     return lbl
+
+
+def radioButtonGrp(nrb=2, l='sample :', sl=1, **kwargs):
+    HL  = Qt.widgets.QHBoxLayout()
+    lbl = QtWidgets.QLabel(l, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+    HL.addWidget(lbl)
+
+    rb_list = []
+    for i in range(nrb):
+        bl = utils.getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
+        rb = QtWidgets.QRadioButton(bl)
+        if i == sl - 1:
+            rb.setChecked(1)
+        HL.addWidget(rb)
+        rb_list.append(rb)
+
+    return [HL] + rb_list
+
+
+def checkBoxGrp(ncb=3, l='sample :', sl=[], **kwargs):
+    HL  = QtWidgets.QHBoxLayout()
+    lbl = QtWidgets.QLabel(l, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+    HL.addWidget(lbl)
+
+    cb_list = []
+    for i in range(ncb):
+        bl = utils.getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
+        cb = QtWidgets.QCheckBox(bl)
+        if sl[i]:
+            cb.setChecked(1)
+        HL.addWidget(cb)
+        cb_list.append(cb)
     
+    return [HL] + cb_list

@@ -28,8 +28,9 @@ import sys
 import functools
 import subprocess
 import platform
+import time
 
-from .. import utils as utils
+from . import utils as utils
 
 
 maya_ver = int(cmds.about(v=1)[:4])
@@ -134,6 +135,13 @@ class RightClickButton(QtWidgets.QPushButton):
         else:
             super(self.__class__, self).mouseReleaseEvent(event)
 
+class CustomDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, f=0):
+        super(CustomDialog, self).__init__(parent, f)
+    
+    def setLayout():
+        pass
+
 
 def separator(bold=1, style='solid', color='#aaa'):
     lbl   = QtWidgets.QLabel()
@@ -175,3 +183,50 @@ def checkBoxGrp(ncb=3, l='sample :', sl=[], **kwargs):
         cb_list.append(cb)
     
     return [HL] + cb_list
+
+
+def fileDialog(parent, mode, **kwargs):
+    """mult file dialog util function.
+    """
+    dir_path      = utils.getFlag(kwargs, ['dir_path', 'dp'], os.path.expanduser('~'))
+    title         = utils.getFlag(kwargs, ['title', 't'], '{} File'.format(mode.capitalize()))
+    dir_only      = utils.getFlag(kwargs, ['dir_only', 'do'], False)
+    filters       = utils.getFlag(kwargs, ['filters', 'fl'], 'Json Files (*.json)')
+    select_filter = utils.getFlag(kwargs, ['select_filter', 'slf'], 'Json Files (*.json)')
+    options       = utils.getFlag(kwargs, ['options', 'op'], QtWidgets.QFileDialog.DontUseNativeDialog)
+    mult          = utils.getFlag(kwargs, ['mult', 'm'], False)
+
+    dialog = QtWidgets.QFileDialog()
+    if mode == 'open':
+        if not dir_only:
+            if not mult:
+                fp = dialog.getOpenFileName(parent, title, dir_path, filters, select_filter, options)
+            else:
+                fp = dialog.getOpenFileNames(parent, title, dir_path, filters, select_filter, options)
+        else:
+            options += dialog.DirectoryOnly|dialog.ShowDirsOnly
+            fp = dialog.getExistingDirectory(parent, title, dir_path, options)
+            
+    elif mode == 'save':
+        fp = dialog.getSaveFileName(parent, title, dir_path, filters, select_filter, options)            
+    
+    if fp.isEmpty():
+        return
+    fp = fp.replace('/', os.sep)
+    return fp
+
+
+def progressDialog(event, message, parent, button='Cancel', **kwargs):
+    _max = 100
+    _min = 0
+    pDialog = QtWidgets.QProggressDialog(message, button, _min, _max, parent)
+    pDialog.setWindowTitle('Progress Dialog')
+
+    #a = processing_object
+    for count in range(_max + 1):
+        event.processEventd(QtCore.QEventLoop.ExcludeUserInputEvents)
+        if pDialog.wasCanceled():
+            break
+        pDialog.setValue(count)
+        pDialog.setLabelText(message + '%d %%' % count)
+        #time.sleep(0.1)

@@ -24,7 +24,7 @@ import json
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
 
 from .. import utils as utils
-from .. import node as node
+from .. import node as nd
 from .. import widget as widget
 
 
@@ -37,7 +37,35 @@ class AttributeSplatterGUI(widget.BaseWidget):
         mainVL = QtWidgets.QVBoxLayout()
         mainWidget.setLayout(mainVL)
 
+        #mainVL.addWidget(QtWidgets.QLabel)
+
+        HV   = QtWidgets.QHBoxLayout()
+        exPB = QtWidgets.QPushButton('Export')
+        exPB.clicked.connect(self.saveJsonFile)
+        imPB = QtWidgets.QPushButton('Import')
+        imPB.clicked.connect(self.openJsonFile)
+
+        HV.addWidget(exPB)
+        HV.addWidget(imPB)
+
+        self.psL, self.psLE = widget.textFieldButtonGrp(l='Set Node :', bl='set', cwl='90')
+
+        self.userOnly = QtWidgets.QCheckBox('Only user defined attribute', checked=1)
+        mainVL.addWidget(self.userOnly)
+        mainVL.addLayout(self.psL)
+
+
         mainVL.addStretch()
+    
+    def getOpenPath(self, filterType=['json']):
+        self.openPath = widget.fileDialog(self, mode='open')
+    
+    def getSavePath(self):
+        self.savePath = widget.fileDialog(self, mode='save')
+    
+    def saveJsonFile():
+        pass
+
     
     @widget.undo
     def cmd(self, *args ,**kwargs):

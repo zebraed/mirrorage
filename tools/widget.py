@@ -29,6 +29,7 @@ import functools
 import subprocess
 import platform
 import time
+from abc import ABCMeta, abstractmethod
 
 from . import utils as utils
 
@@ -56,6 +57,8 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
     """
     title = ''
     windowName = 'newGUI'
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, parent=None, **kwargs):
         super(BaseWidget, self).__init__()
@@ -115,9 +118,7 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
         self.anim.setEndValue(QtCore.QRect(x, y, wid, hei))
         self.anim.start()
     
-    #================#
-    #virtual function#
-    #=================
+    @abstractmethod
     def setLayout(self, mainWidget):
         pass
 
@@ -134,6 +135,16 @@ class RightClickButton(QtWidgets.QPushButton):
             self.rightClicked.emit()
         else:
             super(self.__class__, self).mouseReleaseEvent(event)
+
+
+class RightClickToolButton(QtWidgets.QToolButton):
+    rightClicked = QtCore.Signal()
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.RightButton:
+            self.rightClicked.emit()
+        else:
+            super(self.__class__, self).mouseReleaseEvent(e)
+
 
 class CustomDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, f=0):
@@ -183,6 +194,35 @@ def checkBoxGrp(ncb=3, l='sample :', sl=[], **kwargs):
         cb_list.append(cb)
     
     return [HL] + cb_list
+
+
+def textFieldButtonGrp(l="label", tx="", bl="", bc="", **kwargs):
+    cw1        = kwargs.setdefault('cw1', 100)
+    optBTN1    = kwargs.setdefault('bl1', None)
+    optBTNCmd1 = kwargs.setdefault('bc1', None)
+    tbHL = QtWidgets.QHBoxLayout()
+
+    tbLBL = QtWidgets.QLabel(l)
+    tbLBL.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+    tbLBL.setFixedWidth(cw1)
+    tbHL.addWidget(tbLBL)
+
+    tbLE = QtWidgets.QLineEdit(tx)
+    tbHL.addWidget(tbLE)
+
+    if bl != "":
+        tbPB = QtWidgets.QPushButton(bl)
+        if bc == "":
+            bc = lambda *args:tbLE.setText(pm.cmds.ls(sl=1)[0] if len(pm.ls(sl=1)) > 0 else "")
+        tbPB.clicked.connect(bc)
+        tbHL.addWidget(tbPB)
+
+    if optBTN1 is not None:
+        optPB1 = QtWidgets.QPushButton(optBTN1)
+        optPB1.clicked.connect(optBTNCmd1)
+        tbHL.addWidget(optPB1)
+
+    return tbHL, tbLE
 
 
 def fileDialog(parent, mode, **kwargs):

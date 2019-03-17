@@ -28,44 +28,50 @@ from .. import node as nd
 from .. import widget as widget
 
 
-class AttributeSplatterGUI(widget.BaseWidget):
+class AttributeSplatterGUI(widget.CustomMoveAnimationWidget):
     title = "Attribute Splatter"
     windowName = 'attributeSplatterWidget'
 
     def setLayout(self, mainWidget):
+        self.resize(300, 140)
         
         mainVL = QtWidgets.QVBoxLayout()
         mainWidget.setLayout(mainVL)
+        self.addHelpDoc(os.getcwd())
 
         #mainVL.addWidget(QtWidgets.QLabel)
 
         HV   = QtWidgets.QHBoxLayout()
         exPB = QtWidgets.QPushButton('Export')
-        exPB.clicked.connect(self.saveJsonFile)
+        exPB.clicked.connect(self.getSavePath)
         imPB = QtWidgets.QPushButton('Import')
-        imPB.clicked.connect(self.openJsonFile)
+        imPB.clicked.connect(self.getOpenPath)
 
         HV.addWidget(exPB)
         HV.addWidget(imPB)
 
         self.psL, self.psLE = widget.textFieldButtonGrp(l='Set Node :', bl='set', cwl='90')
 
-        self.userOnly = QtWidgets.QCheckBox('Only user defined attribute', checked=1)
+        self.userOnly = QtWidgets.QCheckBox('Export only user defined attribute', checked=1)
         mainVL.addWidget(self.userOnly)
         mainVL.addLayout(self.psL)
-
+        mainVL.addLayout(HV)
 
         mainVL.addStretch()
+
+        #self.setWindowOpacity(0.90)
     
-    def getOpenPath(self, filterType=['json']):
+    def getOpenPath(self):
         self.openPath = widget.fileDialog(self, mode='open')
     
     def getSavePath(self):
         self.savePath = widget.fileDialog(self, mode='save')
     
-    def saveJsonFile():
+    def saveJsonFile(self):
         pass
 
+    def openJsonFile(self):
+        pass
     
     @widget.undo
     def cmd(self, *args ,**kwargs):

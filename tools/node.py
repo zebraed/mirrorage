@@ -18,7 +18,6 @@ from maya import cmds
 
 import os
 import sys
-import pathlib
 
 import json
 

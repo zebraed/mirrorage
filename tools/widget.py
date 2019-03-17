@@ -17,11 +17,20 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
-import maya.OpenMayaUI as omUI
+from maya import OpenMayaUI
 
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
 
-from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
+#from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
+
+try:
+    import shiboken
+except:
+    import shiboken2 as shiboken
+
+ptr = OpenMayaUI.MQtUtil.mainWindow()
+parent = shiboken.wrapInstance(long(ptr), QtWidgets.QWidget)
+
 
 import os
 import sys
@@ -50,26 +59,54 @@ def undo(func):
     return wrapper
 
 
-class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
+class BaseWidget(QtWidgets.QMainWindow):
     """
     Bass pyside widgets class for general use.
 
     """
-    title = ''
+    title      = ''
     windowName = 'newGUI'
+    qss_path   = '_default'
 
-    __metaclass__ = ABCMeta
-
-    def __init__(self, parent=None, **kwargs):
-        super(BaseWidget, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BaseWidget, self).__init__(parent)
 
         if pm.window(self.windowName, q=1, ex=1):
             pm.deleteUI(self.windowName)
         self.setObjectName(self.windowName)
 
+        #define main widget.
         self.mainWidget = QtWidgets.QWidget()
-
         self.setLayout(self.mainWidget)
+
+        self.initUiElements()
+
+        if self.qss_path != '':
+            qss_pathName = self.qss_path
+            if self.qss_path == '_default':
+                qss_pathName = 'style.qss'
+            qss_file = QtCore.QFile(os.path.dirname(__file__) + '/' + qss_pathName)
+            qss_file.open(QtCore.QFile.ReadOnly)
+            self.setStyleSheet(str(qss_file.readAll().data()))    
+        
+        #self.setting_file = os.path.join(os.getenv('MAYA_APP_DIR'), 'mirrorage_windowPref.ini')
+        #self.pyside_setting = QtCore.QSettings(self.setting_file, QtCore.QSettings.IniFormat)
+        #self.pyside_setting.setIniCodec('utf-8')
+
+        #self.restore()
+
+    def initUiElements(self):
+        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+
+        #self.setWindowOpacity(0.90)
+
+        p = QtGui.QPainter()
+        radius = 10
+        widget_rect = self.rect()
+        rounded_rect = QtGui.QPainterPath()
+        rounded_rect.addRoundedRect(QtCore.QRectF(0, 0, 300, 130), radius, radius)
+        mask = QtGui.QRegion(rounded_rect.toFillPolygon().toPolygon())
+        self.setMask(mask)
 
         self.setWindowTitle(self.title)
         self.setCentralWidget(self.mainWidget)
@@ -77,26 +114,33 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setAttribute(QtCore.Qt.WA_AlwaysShowToolTips)
 
-        setting_file = os.path.join(os.getenv('MAYA_APP_DIR'), 'mirrorage_windowPref.ini')
-        self.pyside_setting = QtCore.QSettings(setting_file, QtCore.QSettings.IniFormat)
-        self.pyside_setting.setIniCodec('utf-8')
-
-    def restore(self):
-        if self.pyside_setting:
-            self.restoreGeometry(self.pyside_setting.value(self.windowName + '-geom'))
-    
     def show(self):
-        self.restore()
         super(BaseWidget, self).show()
-    
+
     def closeEvent(self, event):
-        if self.pyside_setting:
-            self.pyside_setting.setValue(self.windowName + '-geom', self.saveGeometry)
+        #if not self.isStarted():
+        #    self.animation.start()
+        #    self.isStarted = True
+        #    event.ignore()
+        #else:
+        #    super(BaseWidget, self).closeEvent(event)
+
+        #if self.pyside_setting:
+        #    self.pyside_setting.setValue('windowState', self.saveState())
+        #    self.pyside_setting.setValue(self.windowName + '-geom', self.saveGeometry)
+        pass
+    
+    def restore(self):
+        #if self.pyside_setting:
+        #    setting = QtCore.QSettings(self.setting_file, QtCore.QSettings.IniFormat)
+        #    #self.restoreState(self.pyside_setting.value("windowState"))
+        #    self.restoreGeometry(self.pyside_setting.value(self.windowName + "-geom"))
+        pass
     
     def addHelpDoc(self, path):
         mb = self.menuBar()
         help_menu = mb.addMenu('&Help')
-        help_menu.addAction(QtWidgets.QAction('document', self, trriggered=pm.Callback(self.open_file, path)))
+        help_menu.addAction(QtWidgets.QAction('document', self, triggered=pm.Callback(self.open_file, path)))
 
     def open_file(self, path, ext='.md'):
         file_path = path.replace('.py', ext)
@@ -107,26 +151,147 @@ class BaseWidget(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
             os.startfile(file_path)
         elif pl == 'Linux':
             subprocess.call(['gedit-open', file_path])
-    
-    def setAnimationSize(self, **kwargs):
-        #utils.getFlag(kwargs, [])
-        self.anim = QtCore.QPropertyAnimation(self, 'geometry')
-        self.anim.setEasingCurve(QtCore.QEasingCurve.InOutQuint)
-        x = self.geometry().x()
-        y = self.geometry().y()
 
-        self.anim.setEndValue(QtCore.QRect(x, y, wid, hei))
-        self.anim.start()
-    
     @abstractmethod
     def setLayout(self, mainWidget):
         pass
 
 
-class SubWidget(BaseWidget):
+class CustomMoveAnimationWidget(BaseWidget):
     def __init__(self, *args, **kwargs):
-        super(SubWidget, self).__init__(*args, **kwargs)
+        #self.mainWidget = parent
+        super(CustomMoveAnimationWidget, self).__init__(*args, **kwargs)
+
+        self.setWindowFlags(QtCore.Qt.Window              | 
+                            QtCore.Qt.Tool                |
+                            QtCore.Qt.FramelessWindowHint |
+                            QtCore.Qt.WindowStaysOnTopHint|
+                            QtCore.Qt.X11BypassWindowManagerHint)
+        self.__isDrag = False
+        self.__startPos = QtCore.QPoint(0, 0)
+
+        pal = QtGui.QPalette()
+        self.setPalette(pal)
+        
+        self.resize(self.width(), 250)
+        self.setWindowOpacity(0.90)
+        self.closeTimer = QtCore.QTimer(self, timeout=self.stop)
+
+        self.btn = SysButton(self)
+        self.btn.setText('Close')
+        self.btn.setGeometry(0, 0, 40, 20)
+        self.btn.clicked.connect(self.stop)
+        self.closeWinButtonLayout = QtWidgets.QVBoxLayout()
+        self.closeWinButtonLayout.addWidget(self.btn,  alignment=QtCore.Qt.AlignRight)
+        self.mainWidget.setLayout(self.closeWinButtonLayout)
     
+
+    def inAnimation(self, startPos, endPos, nextAction=lambda:None):
+        opacityAnimation = QtCore.QPropertyAnimation(self, b'windowOpacity')
+        opacityAnimation.setStartValue(0.0)
+        opacityAnimation.setEndValue(0.9)
+
+        opacityAnimation.setEasingCurve(QtCore.QEasingCurve.InQuad)
+        opacityAnimation.setDuration(300)
+
+        sizeAnimation = QtCore.QPropertyAnimation(self, b'geometry')
+        sizeAnimation.setStartValue(QtCore.QRect(startPos, QtCore.QSize(self.width(), 0)))
+        sizeAnimation.setEndValue(QtCore.QRect(endPos, QtCore.QSize(self.width(), self.height())))
+        sizeAnimation.setEasingCurve(QtCore.QEasingCurve.InQuad)
+        sizeAnimation.setDuration(300)
+
+        self.animGroup = QtCore.QParallelAnimationGroup(self)
+        self.animGroup.addAnimation(opacityAnimation)
+        self.animGroup.addAnimation(sizeAnimation)
+        self.animGroup.finished.connect(nextAction)
+        self.animGroup.start()
+    
+    def outAnimation(self, nextAction=lambda:None):
+        opacityAnimation = QtCore.QPropertyAnimation(self, b'windowOpacity')
+        opacityAnimation.setStartValue(0.9)
+        opacityAnimation.setEndValue(0.0)
+        sizeAnimation = QtCore.QPropertyAnimation(self, b'geometry')
+        sizeAnimation.setStartValue(QtCore.QRect(self.pos(), QtCore.QSize(self.width(), self.height())))
+        sizeAnimation.setEndValue(QtCore.QRect(QtCore.QPoint(
+                                                            self.pos().x(),
+                                                            self.pos().y()-50 ),
+                                                            QtCore.QSize(self.width(), 0)))
+        sizeAnimation.setEasingCurve(QtCore.QEasingCurve.InQuad)
+        sizeAnimation.setDuration(300)
+
+        opacityAnimation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+        opacityAnimation.setDuration(300)
+
+        del self.animGroup
+        self.animGroup = QtCore.QParallelAnimationGroup(self)
+        self.animGroup.addAnimation(opacityAnimation)
+        self.animGroup.addAnimation(sizeAnimation)
+        self.animGroup.finished.connect(nextAction)
+        self.animGroup.start()
+    
+    def paintEvent(self, event):
+        super(CustomMoveAnimationWidget, self).paintEvent(event)
+    
+    def stop(self):
+        self.outAnimation(self.close)
+    
+    def close(self):
+        super(CustomMoveAnimationWidget, self).close()
+
+        self.closeTimer.stop()
+        self.closeTimer.deleteLater()
+        self.hide()
+        self.animGroup.stop()
+        self.deleteLater()
+    
+    def show(self, nextAction=lambda:None, closeTime=1000*10):
+        super(CustomMoveAnimationWidget, self).show()
+        self.geometry = QtWidgets.QApplication.desktop().availableGeometry()
+        center = QtWidgets.QApplication.desktop().availableGeometry().center()
+        #self.geometry = desktop.screenGeometry()
+        framesize = self.frameSize()
+        startPos = QtCore.QPoint(
+                                self.geometry.width() / 2 - framesize.width() / 2,
+                                self.geometry.height() / 2 - framesize.height() / 2 + self.mainWidget.height())
+        endPos   = QtCore.QPoint(
+                                self.geometry.width() / 2 - framesize.width() / 2,
+                                self.geometry.height() / 2 - framesize.height() / 2 + self.mainWidget.height() + 10)
+        self.move(center)
+
+        self.inAnimation(startPos, endPos, nextAction=nextAction)
+        #self.closeTimer.start(closeTime)
+
+    def attentionIn(self):
+        self.closeTimer.stop()
+
+    def attentionOut(self):
+        self.closeTimer.start(1000*1.5)
+    
+    def mousePressEvent(self, event):
+        self.__isDrag = True
+        self.__startPos = event.pos()
+        super(CustomMoveAnimationWidget, self).mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        self.__isDrag = False
+        super(CustomMoveAnimationWidget, self).mouseReleaseEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        if self.__isDrag:
+            self.move(self.mapToParent(event.pos() - self.__startPos))
+        super(CustomMoveAnimationWidget, self).mouseMoveEvent(event)
+
+
+class SysButton(QtWidgets.QPushButton):
+    closed = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(SysButton, self).__init__(*args, **kwargs)
+        self.clicked.connect(self.__closed)
+    
+    def __closed(self):
+        self.closed.emit()
+ 
 
 class RightClickButton(QtWidgets.QPushButton):
     rightClicked = QtCore.Signal()
@@ -250,7 +415,7 @@ def fileDialog(parent, mode, **kwargs):
     elif mode == 'save':
         fp = dialog.getSaveFileName(parent, title, dir_path, filters, select_filter, options)            
     
-    if fp.isEmpty():
+    if fp[0].isEmpty():
         return
     fp = fp.replace('/', os.sep)
     return fp

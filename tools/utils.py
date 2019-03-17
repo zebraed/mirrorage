@@ -18,12 +18,8 @@ from maya import cmds
 
 import os
 import sys
-import pathlib
-
-import json
 
 
-rootpath = os.path.abspath(os.path.dirname("__file__"))
 
 
 def getFlag(kwargs, args_list, default_value):

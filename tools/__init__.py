@@ -13,6 +13,8 @@ from __future__ import absolute_import
 from future_builtins import map
 from future_builtins import filter
 
+import re
+
 import pymel.core as pm
 
 try:
@@ -21,8 +23,8 @@ except:
     unicode = str
 
 
-def getPy(args):
-    """this is convertion pymel object from string or unicode argument.
+def getPy(arg):
+    """Convert to pymel object from string or unicode argument.
 
     Args:
     :param arg : (string or unicode) argument.
@@ -45,7 +47,7 @@ def getFlag(kwargs, args_list, default_value):
     Returns:
         argument value, default_value if not
     
-    ex.)
+    e.g.)
         name = getFlag(kwargs, ['name', 'n'], 'node#')
     """
     if not isinstance(args_list, (list, tuple)):
@@ -59,14 +61,23 @@ def getFlag(kwargs, args_list, default_value):
 
 def get1st(value, default=None, **kwargs):
     """this is Return 1st item of the given value.
-       
-       Args:
-       
-            param: value   (mixed)  -the value to operate.
-            param: default (mixed)  -default result if the value was None.(defult:None)
-       
-       Return:
-            mixed
+
+    Parameters
+    ----------
+    value : mixed
+        the value to operate.
+
+    default : mixed
+        default result if the value was None. (defult : None)
+    
+    string : bool
+        as string char.
+
+
+    Returns
+    -------
+        mixed
+    
     """
     string = getFlag(kwargs, ['string', 's'], False)
     if hasattr(value, '__iter__'):
@@ -84,14 +95,22 @@ def get1st(value, default=None, **kwargs):
 
 def getLast(value, default=None, **kwargs):
     """this is Return Last list item value.
-       
-       Args:
-       
-            param: value   (mixed)  -the value to operate.
-            param: default (mixed)  -default result if the value was None.(defult:None)
-       
-       Return:
-            mixed
+
+    Parameters
+    ----------
+    value : mixed
+        the value to operate.
+
+    default : mixed
+        default result if the value was None. (defult : None)
+    
+    string : bool
+        as string char.
+
+
+    Returns
+    -------
+        mixed    
     """
     string = getFlag(kwargs, ['string', 's'], False)
     if hasattr(value, '__iter__'):
@@ -105,3 +124,59 @@ def getLast(value, default=None, **kwargs):
                 return value[-1]
         else:
             return value
+
+
+def solveNodeName( nameLst, node="", **kwargs):
+    """Rename node name by according to certain naming regulations.
+
+    Parameters
+    ----------
+    nameList : [string]
+        -
+
+    node     : obj or str 
+        -
+
+    Returns
+    -------
+        mixed
+    
+    e.g.)
+        solveNodeName(['cone', '~', 'L'], node='pCone1_cube_C')
+        # Result: 'cone_cube_L' #
+    """
+    newName = []
+    nodeLst = []
+    if node != "":
+        nodeLst  = node.split('_')
+    flg = 1
+    for i, n in enumerate(nameLst):
+        if n.find("~") > -1:
+            if len(nodeLst) > i:
+                n = n.replace('~', nodeLst[i])
+            else:
+                flg = -1
+        if n.find("=") > -1:
+            n = n.replace('=', pm.PyNode(node).type())
+
+        matchList = re.findall( '\[(.+?)\]', n)
+        if matchList != None:
+            for m in matchList:
+                n = n.replace( '[%s]'%m, m[0].upper()+m[1:])
+
+        if flg > 0:
+            newName.append( n )
+        flg = 1
+    return '_'.join(newName)
+
+
+def isNumericAttr(_type):
+    """check isNumericAttr.
+    """
+    isNumericAttr = 0
+    numAttrs = ['long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLiner', 'time']
+    for numAttr in numAttrs:
+        if numAttrs == _type:
+            return True
+        else:
+            return False

@@ -20,6 +20,7 @@ import maya.OpenMaya as om
 from maya import OpenMayaUI
 
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+from mirrorage.tools import *
 
 #from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
@@ -39,8 +40,6 @@ import subprocess
 import platform
 import time
 from abc import ABCMeta, abstractmethod
-
-from . import utils as utils
 
 
 maya_ver = int(cmds.about(v=1)[:4])
@@ -79,6 +78,10 @@ class BaseWidget(QtWidgets.QMainWindow):
         self.mainWidget = QtWidgets.QWidget()
         self.setLayout(self.mainWidget)
 
+        pos = QtGui.QCursor().pos()
+        self.setGeometry(QtCore.QRect(pos.x(), pos.y(), 300, 170))
+        self.setFixedSize(300, 170)
+
         self.initUiElements()
 
         if self.qss_path != '':
@@ -104,7 +107,7 @@ class BaseWidget(QtWidgets.QMainWindow):
         radius = 10
         widget_rect = self.rect()
         rounded_rect = QtGui.QPainterPath()
-        rounded_rect.addRoundedRect(QtCore.QRectF(0, 0, 300, 130), radius, radius)
+        rounded_rect.addRoundedRect(QtCore.QRectF(0, 0, self.width(), self.height()-20), radius, radius)
         mask = QtGui.QRegion(rounded_rect.toFillPolygon().toPolygon())
         self.setMask(mask)
 
@@ -165,7 +168,6 @@ class CustomMoveAnimationWidget(BaseWidget):
         self.setWindowFlags(QtCore.Qt.Window              | 
                             QtCore.Qt.Tool                |
                             QtCore.Qt.FramelessWindowHint |
-                            QtCore.Qt.WindowStaysOnTopHint|
                             QtCore.Qt.X11BypassWindowManagerHint)
         self.__isDrag = False
         self.__startPos = QtCore.QPoint(0, 0)
@@ -173,7 +175,6 @@ class CustomMoveAnimationWidget(BaseWidget):
         pal = QtGui.QPalette()
         self.setPalette(pal)
         
-        self.resize(self.width(), 250)
         self.setWindowOpacity(0.90)
         self.closeTimer = QtCore.QTimer(self, timeout=self.stop)
 
@@ -183,8 +184,13 @@ class CustomMoveAnimationWidget(BaseWidget):
         self.btn.clicked.connect(self.stop)
         self.closeWinButtonLayout = QtWidgets.QVBoxLayout()
         self.closeWinButtonLayout.addWidget(self.btn,  alignment=QtCore.Qt.AlignRight)
+
+        #self.sizeVL = QtWidgets.QVBoxLayout()
+        #sizeGrip = QtWidgets.QSizeGrip(self)
+        #self.sizeVL.addWidget(sizeGrip, False, QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)
         self.mainWidget.setLayout(self.closeWinButtonLayout)
-    
+        #self.mainWidget.setLayout(self.sizeVL)
+
 
     def inAnimation(self, startPos, endPos, nextAction=lambda:None):
         opacityAnimation = QtCore.QPropertyAnimation(self, b'windowOpacity')
@@ -248,7 +254,6 @@ class CustomMoveAnimationWidget(BaseWidget):
         super(CustomMoveAnimationWidget, self).show()
         self.geometry = QtWidgets.QApplication.desktop().availableGeometry()
         center = QtWidgets.QApplication.desktop().availableGeometry().center()
-        #self.geometry = desktop.screenGeometry()
         framesize = self.frameSize()
         startPos = QtCore.QPoint(
                                 self.geometry.width() / 2 - framesize.width() / 2,
@@ -259,13 +264,6 @@ class CustomMoveAnimationWidget(BaseWidget):
         self.move(center)
 
         self.inAnimation(startPos, endPos, nextAction=nextAction)
-        #self.closeTimer.start(closeTime)
-
-    def attentionIn(self):
-        self.closeTimer.stop()
-
-    def attentionOut(self):
-        self.closeTimer.start(1000*1.5)
     
     def mousePressEvent(self, event):
         self.__isDrag = True
@@ -280,6 +278,10 @@ class CustomMoveAnimationWidget(BaseWidget):
         if self.__isDrag:
             self.move(self.mapToParent(event.pos() - self.__startPos))
         super(CustomMoveAnimationWidget, self).mouseMoveEvent(event)
+    
+    def resizeEvent(self, QResizeEvent):
+        super(CustomMoveAnimationWidget, self).resizeEvent(QResizeEvent)
+        self.setFixedWidth(self.width())
 
 
 class SysButton(QtWidgets.QPushButton):
@@ -291,7 +293,7 @@ class SysButton(QtWidgets.QPushButton):
     
     def __closed(self):
         self.closed.emit()
- 
+
 
 class RightClickButton(QtWidgets.QPushButton):
     rightClicked = QtCore.Signal()
@@ -318,6 +320,14 @@ class CustomDialog(QtWidgets.QDialog):
     def setLayout():
         pass
 
+class Image(QtWidgets.QLabel):
+    def __init__(self, fileName=None, parent=None):
+        super(Image, self).__init__(parent)
+        self.setImage(fileName)
+    
+    def setImage(self, fileName):
+        self.setPixmap(QtWidgets.QPixmap(fileName))
+
 
 def separator(bold=1, style='solid', color='#aaa'):
     lbl   = QtWidgets.QLabel()
@@ -334,7 +344,7 @@ def radioButtonGrp(nrb=2, l='sample :', sl=1, **kwargs):
 
     rb_list = []
     for i in range(nrb):
-        bl = utils.getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
+        bl = getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
         rb = QtWidgets.QRadioButton(bl)
         if i == sl - 1:
             rb.setChecked(1)
@@ -351,7 +361,7 @@ def checkBoxGrp(ncb=3, l='sample :', sl=[], **kwargs):
 
     cb_list = []
     for i in range(ncb):
-        bl = utils.getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
+        bl = getFlag(kwargs, ['bl{}'.format(i+1)], 'None')
         cb = QtWidgets.QCheckBox(bl)
         if sl[i]:
             cb.setChecked(1)
@@ -362,9 +372,9 @@ def checkBoxGrp(ncb=3, l='sample :', sl=[], **kwargs):
 
 
 def textFieldButtonGrp(l="label", tx="", bl="", bc="", **kwargs):
-    cw1        = kwargs.setdefault('cw1', 100)
-    optBTN1    = kwargs.setdefault('bl1', None)
-    optBTNCmd1 = kwargs.setdefault('bc1', None)
+    cw1        = getFlag(kwargs, ['centerWidth1', 'cw1'], 100)
+    optBTN1    = getFlag(kwargs, ['buttonLabel1', 'bl1'], None)
+    optBTNCmd1 = getFlag(kwargs, ['buttonCommand', 'bc1'], None)
     tbHL = QtWidgets.QHBoxLayout()
 
     tbLBL = QtWidgets.QLabel(l)
@@ -393,29 +403,29 @@ def textFieldButtonGrp(l="label", tx="", bl="", bc="", **kwargs):
 def fileDialog(parent, mode, **kwargs):
     """mult file dialog util function.
     """
-    dir_path      = utils.getFlag(kwargs, ['dir_path', 'dp'], os.path.expanduser('~'))
-    title         = utils.getFlag(kwargs, ['title', 't'], '{} File'.format(mode.capitalize()))
-    dir_only      = utils.getFlag(kwargs, ['dir_only', 'do'], False)
-    filters       = utils.getFlag(kwargs, ['filters', 'fl'], 'Json Files (*.json)')
-    select_filter = utils.getFlag(kwargs, ['select_filter', 'slf'], 'Json Files (*.json)')
-    options       = utils.getFlag(kwargs, ['options', 'op'], QtWidgets.QFileDialog.DontUseNativeDialog)
-    mult          = utils.getFlag(kwargs, ['mult', 'm'], False)
+    dir_path      = getFlag(kwargs, ['dir_path',       'dp'], os.path.expanduser('~'))
+    title         = getFlag(kwargs, ['title',           't'], '{} File'.format(mode.capitalize()))
+    dir_only      = getFlag(kwargs, ['dir_only',       'do'], False)
+    filters       = getFlag(kwargs, ['filters',        'fl'], 'Json Files (*.json)')
+    select_filter = getFlag(kwargs, ['select_filter', 'slf'], 'Json Files (*.json)')
+    options       = getFlag(kwargs, ['options',        'op'], QtWidgets.QFileDialog.DontUseNativeDialog)
+    mult          = getFlag(kwargs, ['mult',            'm'], False)
 
     dialog = QtWidgets.QFileDialog()
     if mode == 'open':
         if not dir_only:
             if not mult:
-                fp = dialog.getOpenFileName(parent, title, dir_path, filters, select_filter, options)
+                fp = dialog.getOpenFileName(parent, title, dir_path, filters, select_filter, options)[0]
             else:
-                fp = dialog.getOpenFileNames(parent, title, dir_path, filters, select_filter, options)
+                fp = dialog.getOpenFileNames(parent, title, dir_path, filters, select_filter, options)[0]
         else:
             options += dialog.DirectoryOnly|dialog.ShowDirsOnly
-            fp = dialog.getExistingDirectory(parent, title, dir_path, options)
+            fp = dialog.getExistingDirectory(parent, title, dir_path, options)[0]
             
     elif mode == 'save':
-        fp = dialog.getSaveFileName(parent, title, dir_path, filters, select_filter, options)            
+        fp = dialog.getSaveFileName(parent, title, dir_path, filters, select_filter, options)[0]
     
-    if fp[0].isEmpty():
+    if not fp:
         return
     fp = fp.replace('/', os.sep)
     return fp

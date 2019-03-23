@@ -110,7 +110,11 @@ class cmd(object):
     def importJsonToAttrs(cls, path, **kwargs):
         f = open(path, 'r')
         s = f.read()
-        atDict = json.loads(s)
+
+        #Keep order key and values method.
+        deco   = json.JSONDecoder(object_pairs_hook=OrderedDict)
+        atDict = deco.decode(s)
+        #atDict = json.loads(s)
         f.close()
         return atDict
 
@@ -142,22 +146,15 @@ class cmd(object):
         """
 
         def _addDictAttr(node, value, attrflag, k, ln, _type, sn , nn, cb, **kwargs):
-            _max = getFlag(kwargs, ['maxVale', '_max'], None)
-            _min = getFlag(kwargs, ['minValue', '_min'], None)
-            dv   = getFlag(kwargs, ['defaultValue', 'dv'], None)
+            _max   = getFlag(kwargs, ['maxVale', '_max'],    None)
+            _min   = getFlag(kwargs, ['minValue', '_min'],   None)
+            dv     = getFlag(kwargs, ['defaultValue', 'dv'], None)
             enum   = getFlag(kwargs, ['_enumerate', 'enum'], None)
 
             attrName = ln
-
-            #check isNumAttr
-            isNumberAttr = 0
-            numAttrs = ['long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLiner', 'time']
-            for numAttr in numAttrs:
-                if numAttrs == _type:
-                    isNumberAttr = 1
             
             if attrflag == 'at':
-                if isNumberAttr:
+                if isNumericAttr(_type):
                     pm.addAttr(node,
                             ln  = ln,
                             at  = _type,

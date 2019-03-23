@@ -22,7 +22,7 @@ from maya import OpenMayaUI
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
 from mirrorage.tools import *
 
-#from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
+from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
 try:
     import shiboken
@@ -67,7 +67,7 @@ class BaseWidget(QtWidgets.QMainWindow):
     windowName = 'newGUI'
     qss_path   = '_default'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent=parent, *args, **kwargs):
         super(BaseWidget, self).__init__(parent)
 
         if pm.window(self.windowName, q=1, ex=1):

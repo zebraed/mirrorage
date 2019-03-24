@@ -34,7 +34,7 @@ class cmd(object):
     
     @classmethod
     def exportUserDefineAttribute(cls, node='', at='',  *args, **kwargs):
-        """Export attribute.
+        """Export user defined attributes.
         """
         if node == '':
             node = get1st(pm.selected())
@@ -103,23 +103,27 @@ class cmd(object):
         return attrDic
     
     @classmethod
-    def exportAttrsToJson(cla, dictonary, **kwargs):
+    def exportAttrsToJson(cls, dictonary, **kwargs):
+        """Convert and export attributes json file from dictonary data.
+        """
         return json.dumps(dictonary, sort_keys=True, indent=4)
 
     @classmethod
     def importJsonToAttrs(cls, path, **kwargs):
+        """import json file and decode orderDict.
+        """
         f = open(path, 'r')
         s = f.read()
-
-        #Keep order key and values method.
+        #Keep order keys and values.
         deco   = json.JSONDecoder(object_pairs_hook=OrderedDict)
         atDict = deco.decode(s)
-        #atDict = json.loads(s)
         f.close()
         return atDict
 
     @classmethod
     def exportFile(cls, *args, **kwargs):
+        """Utility func by file exporter.
+        """
         directory = getFlag(kwargs, ['directory', 'd'], "")
         auto      = getFlag(kwargs, ['autoName', 'auto'], False)
         extension = getFlag(kwargs, ['extension', 'ext'], ".json")
@@ -142,7 +146,7 @@ class cmd(object):
 
     @classmethod
     def setAddAttrs(cls, attributeDicts, node, _set=True, add=True, value=True, *args, **kwargs):
-        """this is set & add attrs from attribute dictonary member.
+        """Set & add attrs from attribute dictonary member.
         """
 
         def _addDictAttr(node, value, attrflag, k, ln, _type, sn , nn, cb, **kwargs):

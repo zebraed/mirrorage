@@ -26,9 +26,14 @@ except:
 def getPy(arg):
     """Convert to pymel object from string or unicode argument.
 
-    Args:
-    :param arg : (string or unicode) argument.
-    :return    : (pymel object) or throw.
+    Parameters
+    ----------
+
+    arg : (string or unicode)
+
+    Returns
+    -------
+    pymel object or pass arg.
     """
     if isinstance(arg, (str, unicode)):
         return pm.PyNode(arg)
@@ -40,11 +45,14 @@ def getFlag(kwargs, args_list, default_value):
     """
     multiple argument.
 
-    Args:
-        kwargs(dict): keyword argument
+    Parameters
+    ----------
+        kwargs(dict) : keyword argument
+
         arg_list(list or tuple or string):
 
-    Returns:
+    Returns
+    -------
         argument value, default_value if not
     
     e.g.)
@@ -60,7 +68,7 @@ def getFlag(kwargs, args_list, default_value):
 
 
 def get1st(value, default=None, **kwargs):
-    """this is Return 1st item of the given value.
+    """Return 1st item of the given value.
 
     Parameters
     ----------
@@ -94,7 +102,7 @@ def get1st(value, default=None, **kwargs):
 
 
 def getLast(value, default=None, **kwargs):
-    """this is Return Last list item value.
+    """Return Last list item value.
 
     Parameters
     ----------
@@ -171,9 +179,17 @@ def solveNodeName( nameLst, node="", **kwargs):
 
 
 def isNumericAttr(_type):
-    """check isNumericAttr.
+    """Check NumericAttr.
+
+    Parameters
+    ----------
+    value : _type
+        attribute type.
+
+    Returns
+    -------
+        bool
     """
-    isNumericAttr = 0
     numAttrs = ['long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLiner', 'time']
     for numAttr in numAttrs:
         if numAttrs == _type:

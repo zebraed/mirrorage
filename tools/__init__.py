@@ -14,6 +14,7 @@ from future_builtins import map
 from future_builtins import filter
 
 import re
+import collections
 
 import pymel.core as pm
 
@@ -196,3 +197,9 @@ def isNumericAttr(_type):
             return True
         else:
             return False
+
+
+def convert_keys_to_string(data):
+    if not isinstance(data, dict):
+        return data
+    return dict((str(k), convert_keys_to_string(v)) for k, v in data.items())

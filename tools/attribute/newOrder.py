@@ -52,20 +52,22 @@ class MenuItems(object):
         mel.eval('ModObjectsMenu {};'.format(mainModMenu))
 
         channels_menuitems = [
-            {'name': 'cb_menuDivider', 'label': '',                       'command': None},
-            {'name': 'unlock_trs',     'label': 'Unlock Transformations', 'command': self.cmd.unlockAttrs},
+            {'name': 'cb_menuDivider', 'label': '',                  'command': None},
+            {'name': 'unlock_trs',     'label': 'Unlock Transforms', 'command': self.cmd.unlockAttrs},
         ]
 
         edit_menuitems = [
-            {'name': 'opt_menuDivider',  'label': '',                     'command': None},
-            {'name': 'add_divider',      'label': 'Add Divider',          'command': self.cmd.addDivider},
-            {'name': 'sort_menuDivider', 'label': 'Sort Attributes',      'command': None},
-            {'name': 'cbf_attrMoveUp',   'label': 'Move Attributes Up',   'command': self.cmd.moveUpAttr},
-            {'name': 'cbf_attrMoveDown', 'label': 'Move Attributes Down', 'command': self.cmd.moveDownAttr},
-            {'name': 'edit_menuDivider', 'label': '',                     'command': None},
-            {'name': 'cbf_attrCut',      'label': 'Cut Attributes',       'command': self.newOrder.cutAttribute},
-            {'name': 'cbf_attrCopy',     'label': 'Copy Attributes',      'command': self.newOrder.copyAttribute},
-            {'name': 'cbf_attrPaste',    'label': 'Paste Attributes',     'command': self.newOrder.pasteAttr},
+            {'name': 'opt_menuDivider',  'label': '',                      'command': None},
+            {'name': 'add_divider',      'label': 'Add Division',          'command': self.cmd.addDivision},
+            {'name': 'sort_menuDivider', 'label': 'Sort Attributes',       'command': None},
+            {'name': 'cbf_attrMoveUp',   'label': 'Move Up',   'command': self.cmd.moveUpAttr},
+            {'name': 'cbf_attrMoveDown', 'label': 'Move Down', 'command': self.cmd.moveDownAttr},
+            {'name': 'edit_menuDivider', 'label': '',                      'command': None},
+            {'name': 'cbf_attrCut',      'label': 'Cut Attr',              'command': self.newOrder.cutAttribute},
+            {'name': 'cbf_attrCopy',     'label': 'Copy Attr',             'command': self.newOrder.copyAttribute},
+            {'name': 'cbf_attrPaste',    'label': 'Paste Attr',            'command': self.newOrder.pasteAttr},
+            {'name': 'export_menuDivider', 'label': '',                    'command': None},
+
         ]
 
         self.removeItem(['divider'])

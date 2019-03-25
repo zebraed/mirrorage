@@ -21,8 +21,8 @@ from maya import mel
 import os
 import sys
 from collections import OrderedDict
+from collections import Mapping
 import itertools
-
 
 from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
@@ -30,87 +30,23 @@ from .. import cmdModule as cmdModule
 
 from mirrorage.tools import *
 
-
 ############################
 # attribute utilitu module # 
 ############################
 
 
 class AttributeModules(cmdModule.CmdModule):
-
-    '''
-    @classmethod
-    def getAttrDict(cls, node, at,  *args, **kwargs):
-        """Get attribute params and shaping to dictonary.
-        """
-        node      = getPy(node)
-        attribute = node.attr(at)
-
-        attrDic = OrderedDict()
-        attrDic["ln"] = node.attr(at).attrName(longName=1)
-
-        if pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), sn=True) != None:
-            attrDic["sn"] = pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), sn=True)
-        
-        if pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), nn=True) != None:
-            attrDic["nn"] = pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), nn=True)
-
-        attrDic["type"] = node.attr(at).type()
-
-        if node.attr(at).isKeyable():
-            attrDic["k"] = 1
-        else:
-            attrDic["k"] = 0
-        
-        if node.attr(at).isHidden():
-            attrDic["hidden"] = 1
-        else:
-            attrDic["hidden"] = 0
-
-        if node.attr(at).isKeyable():
-            attrDic['keyable'] = 1
-        else:
-            attrDic['keyable'] = 0
-
-        if node.attr(at).isLocked():
-            attrDic['l'] = 1
-        else:
-            attrDic['l'] = 0
-
-        if node.attr(at).type() == "string":
-            attrDic["attrflag"] = "dt"
-        else:
-            attrDic["attrflag"] = "at"
-
-        if isNumericAttr(node.attr(at).type()):
-            if node.attr(at).getMin() != None:
-                attrDic["min"] = node.attr(at).getMin()
-            if node.attr(at).getMax() != None:
-                attrDic["max"] = node.attr(at).getMax()            
-            #defaultVal    = pm.attributeQuery(node.attr(at).name().split(".")[1] , n=node.attr(at).name() , listDefault=1)
-            attrDic["dv"] = attribute.get(default=1)
-
-        if node.attr(at).type() == "enum":
-            attrDic["enum"] = ":".join(node.attr(at).getEnums().keys())
-        
-        if attribute.parent():
-            attrDic['parent'] = attribute.parent().attrName()
-
-        attrDic['value'] = cmds.getAttr(node.name()+ '.' + at)
-
-        return attrDic
-        '''
     
     @classmethod
     def getAttrDict(cls, attribute):
-
+        """Get attribute params and shaping to dictonary.
+        """
         attribute_type = str(attribute.type())
 
-        d_data = dict()
+        d_data = OrderedDict()
         d_data['ln'] = str(pm.attributeName(attribute, long=True))
         d_data['nn'] = str(pm.attributeName(attribute, nice=True))
         d_data['sn'] = str(pm.attributeName(attribute, short=True))
-        #d_data['cb'] = attribute.isHidden()
         d_data['hidden'] = attribute.isHidden()
         d_data['keyable'] = attribute.isKeyable()
 
@@ -119,7 +55,7 @@ class AttributeModules(cmdModule.CmdModule):
         else:
             d_data['attributeType'] = attribute_type
 
-        if attribute_type in ['long', 'double', 'bool']:
+        if isNumericAttr(attribute_type):
             d_data['defaultValue'] = attribute.get(default=True)
             if attribute.getMax():
                 d_data['maxValue'] = attribute.getMax()
@@ -158,11 +94,11 @@ class AttributeModules(cmdModule.CmdModule):
         srcConnections   = cls.getAttrConnection(srcAttr)
 
         #if attribute is compound, read the children attribute info.
-        srcChildInfo        = dict()
-        srcChildConnections = dict()
+        srcChildInfo        = OrderedDict()
+        srcChildConnections = OrderedDict()
         if srcCompoundState:
             for child in srcAttr.getChildren():
-                srcChildInfo[child.attrName()]       = cls.getAttrDict(child)
+                srcChildInfo[child.attrName()]        = cls.getAttrDict(child)
                 srcChildConnections[child.attrName()] = cls.getAttrConnection()
         
         #lock check
@@ -241,7 +177,7 @@ class AttributeModules(cmdModule.CmdModule):
     def selectAttr(cls, attributes, nodes):
         toSel = [ '{}.{}'.format(n, a) for a in attributes for n in nodes ]
         pm.select(nodes, r=1)
-        strCmd = "import pymel.core as pm\npm.channnelBox('mainChannelBox', e=1, select={}, update=1)"
+        strCmd = "import pymel.core as pm\npm.channelBox('mainChannelBox', e=1, select={}, update=1)"
         pm.evalDeferred(strCmd.format(toSel))
     
     @classmethod
@@ -277,11 +213,11 @@ class AttributeModules(cmdModule.CmdModule):
                 if not res:
                     return
                 
-                for attri in belowAttr:
+                for attr in belowAttr:
                     res = cls.copyAttr(item, item, attr, move=1)
                     if not res:
                         return
-        cls.selectAttrs(selAttr, selItems)
+        cls.selectAttr(selAttrs, selItems)
 
     @classmethod
     def moveDownAttr(cls, *args):
@@ -315,11 +251,11 @@ class AttributeModules(cmdModule.CmdModule):
                 if not res:
                     return
                 
-                for attri in belowAttr:
+                for attr in belowAttr:
                     res = cls.copyAttr(item, item, attr, move=1)
                     if not res:
                         return
-        cls.selectAttrs(selAttr, selItems)
+        cls.selectAttr(selAttrs, selItems)
     
     @classmethod
     def createAttr(cls, node, attrData):
@@ -327,6 +263,7 @@ class AttributeModules(cmdModule.CmdModule):
         if node.hasAttr(attrName):
             pm.displayWarning('attribute {} already exist in {}.'.format(attrName, node))
         else:
+            attrData = convert_keys_to_string(attrData)
             pm.addAttr(node, **attrData)
     
     @classmethod
@@ -363,7 +300,7 @@ class AttributeModules(cmdModule.CmdModule):
     
     
     @classmethod
-    def addDivider(cls, *args):
+    def addDivision(cls, *args):
         """add a divider attribute in channelBox.
             attribute type is enum.
             e.g.) --------
@@ -375,14 +312,14 @@ class AttributeModules(cmdModule.CmdModule):
 
         while fullname in [ attr.attrName() for attr in item.listAttr(ud=1) ]:
             cont += 1
-            fullname = name + str(cont.zfill(2))
+            fullname = name + str(cont).zfill(2)
         
-        d_data               = dict()
+        d_data               = OrderedDict()
         d_data['ln']         = str(fullname)
         d_data['type']       = 'enum'
         d_data['nn']         = str(' ')
-        d_data['hidden']     = True
-        d_data['keyable']    = False
+        d_data['hidden']     = False
+        d_data['keyable']    = True
         d_data['enumName']   = (str('-'* 15))
         cls.createAttr(item, d_data)
     

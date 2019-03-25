@@ -62,10 +62,15 @@ class AttributeModules(cmdModule.CmdModule):
         else:
             attrDic["k"] = 0
         
-        if node.attr(at).isInChannelBox():
-            attrDic["cb"] = 1
+        if node.attr(at).isHidden():
+            attrDic["hidden"] = 1
         else:
-            attrDic["cb"] = 0
+            attrDic["hidden"] = 0
+
+        if node.attr(at).isKeyable():
+            attrDic['keyable'] = 1
+        else:
+            attrDic['keyable'] = 0
 
         if node.attr(at).isLocked():
             attrDic['l'] = 1
@@ -153,8 +158,8 @@ class AttributeModules(cmdModule.CmdModule):
         srcConnections   = cls.getAttrConnection(srcAttr)
 
         #if attribute is compound, read the children attribute info.
-        srcChildInfo        = OrderedDict()
-        srcChildConnections = OrderedDict()
+        srcChildInfo        = dict()
+        srcChildConnections = dict()
         if srcCompoundState:
             for child in srcAttr.getChildren():
                 srcChildInfo[child.attrName()]       = cls.getAttrDict(child)
@@ -322,7 +327,6 @@ class AttributeModules(cmdModule.CmdModule):
         if node.hasAttr(attrName):
             pm.displayWarning('attribute {} already exist in {}.'.format(attrName, node))
         else:
-            print(attrData)
             pm.addAttr(node, **attrData)
     
     @classmethod
@@ -373,13 +377,13 @@ class AttributeModules(cmdModule.CmdModule):
             cont += 1
             fullname = name + str(cont.zfill(2))
         
-        d_data = OrderedDict()
-        d_data['ln']   = str(fullname)
-        d_data['type'] = 'enum'
-        d_data['nn']   = str(' ')
-        d_data['hidden']   = True
+        d_data               = dict()
+        d_data['ln']         = str(fullname)
+        d_data['type']       = 'enum'
+        d_data['nn']         = str(' ')
+        d_data['hidden']     = True
         d_data['keyable']    = False
-        d_data['enumName'] = (str('-'* 15))
+        d_data['enumName']   = (str('-'* 15))
         cls.createAttr(item, d_data)
     
     def unlockAttrs(self, *args):

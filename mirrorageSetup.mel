@@ -2,10 +2,10 @@
     python( "import sys" + "\n"
           + "import os"  + "\n"
           + "p  = 'C:' if os.name == 'nt' else ''"  + "\n"
-          + "p += os.path.expanduser('~/documents/maya/scripts')"  + "\n"
+          + "p += '/Users/ryoyaotani/git/dev/'"  + "\n"
           + "if p not in sys.path:"  + "\n"
           + "    sys.path.append(p)"  + "\n"
           + "import mirrorage"  + "\n"
           + "reload(mirrorage)"  + "\n"
     );
-}
+};

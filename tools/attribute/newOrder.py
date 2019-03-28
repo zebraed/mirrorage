@@ -30,27 +30,17 @@ import mirrorage.tools.attribute.attribute
 from mirrorage.tools import *
 
 
-class MenuItems(object):
+
+class CustomMenuItems(attribute.MenuItems):
     
     def __init__(self, *args, **kwargs):
-        super(MenuItems, self).__init__(*args, **kwargs)
+        super(CustomMenuItems, self).__init__(*args, **kwargs)
         self.cmd = mirrorage.tools.attribute.attribute.AttributeModules()
         self.newOrder = NewOrderCmd()
 
     def createMenuCmd(self):
         """Create menu commands in channelBox.
         """
-
-        cbMenu   = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu2'
-        editMenu = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu3'
-        cbPopup  = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|frameLayout1|mainChannelBox|popupMenu1'
-        mainModMenu = 'MayaWindow|mainModifyMenu'
-
-        mel.eval('generateChannelMenu {} 0;'.format(cbMenu))
-        mel.eval('generateCBEditMenu  {} 0;'.format(editMenu))
-        mel.eval('generateChannelMenu {} 1;'.format(cbPopup))
-        mel.eval('ModObjectsMenu {};'.format(mainModMenu))
-
         channels_menuitems = [
             {'name': 'cb_menuDivider', 'label': '',                  'command': None},
             {'name': 'unlock_trs',     'label': 'Unlock Transforms', 'command': self.cmd.unlockAttrs},
@@ -73,30 +63,11 @@ class MenuItems(object):
         self.removeItem(['divider'])
         self.removeItem([item['name'] for item in edit_menuitems])
 
-        self.addCmdToMenu(channels_menuitems, cbMenu)
-        self.addCmdToMenu(edit_menuitems, editMenu)
-        self.addCmdToMenu(channels_menuitems, cbPopup)
-        self.addCmdToMenu(edit_menuitems, cbPopup)
-        self.addCmdToMenu(edit_menuitems, mainModMenu)
-
-    def removeItem(self, nameList):
-        for name in nameList:
-            for item in pm.lsUI():
-                if item.endswith(name):
-                    pm.deleteUI(item)
-    
-    def addCmdToMenu(self, commands, menu):
-        for item in commands:
-            name    = item['name']
-            label   = item['label']
-            command = item['command']
-
-            if '_menuDivider' in name:
-                name = '{}_{}'.format(getLast(menu.split('|')), name)
-                pm.menuItem(name, parent=menu, divider=True, dividerLabel=label)
-            else:
-                name = '{}_{}'.format(getLast(menu.split('|')), name)
-                pm.menuItem(name, parent=menu, label=label, command=command)
+        self.addCmdToMenu(channels_menuitems, self.cbMenu)
+        self.addCmdToMenu(edit_menuitems, self.editMenu)
+        self.addCmdToMenu(channels_menuitems, self.cbPopup)
+        self.addCmdToMenu(edit_menuitems, self.cbPopup)
+        self.addCmdToMenu(edit_menuitems, self.mainModMenu)
 
 
 class NewOrderCmd(cmdModule.CmdModule):

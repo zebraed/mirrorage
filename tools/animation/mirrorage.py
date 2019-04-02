@@ -16,7 +16,7 @@ import maya.mel as mel
 import pymel.core as pm
 import maya.OpenMaya as om
 
-from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 

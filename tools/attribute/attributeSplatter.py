@@ -22,12 +22,16 @@ from collections import OrderedDict
 
 import json
 
-from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
-from mirrorage.tools import *
+from psychoid.tools import *
 
 
-
+try:
+    unicode
+except:
+    unicode = str
+    
 class cmd(object):
     """ private method
     """

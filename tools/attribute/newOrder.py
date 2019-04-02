@@ -3,6 +3,7 @@
 # vim:fenc=utf-8
 # name : newOrder.py
 # Copyright (c) 2019 / author : R.O a.k.a last_scene
+# Thanks to jer.
 # since 2019 -
 # Distributed under terms of the MIT license.
 
@@ -23,20 +24,56 @@ from collections import OrderedDict
 from functools import partial
 
 
-from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
-from .. import cmdModule as cmdModule
-import mirrorage.tools.attribute.attribute
-from mirrorage.tools import *
+import psychoid.modules as mod
+import psychoid.modules.attribute as att
+from psychoid.tools import *
 
 
 
-class CustomMenuItems(attribute.MenuItems):
+class NewOrder(att.MenuItems):
     
     def __init__(self, *args, **kwargs):
-        super(CustomMenuItems, self).__init__(*args, **kwargs)
-        self.cmd = mirrorage.tools.attribute.attribute.AttributeModules()
+        super(NewOrder, self).__init__(*args, **kwargs)
+
+        if self.maya_ver > 2015:
+            self.cbMenu   = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu2'
+            self.editMenu = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu3'
+            self.cbPopup  = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|frameLayout1|mainChannelBox|popupMenu1'
+            self.mainModMenu = 'MayaWindow|mainModifyMenu'
+        else:
+            pass
+
+        mel.eval('generateChannelMenu {} 0;'.format(self.cbMenu))
+        mel.eval('generateCBEditMenu  {} 0;'.format(self.editMenu))
+        mel.eval('generateChannelMenu {} 1;'.format(self.cbPopup))
+        mel.eval('ModObjectsMenu {};'.format(self.mainModMenu))
+
+        self.cmd = att.AttributeModules()
         self.newOrder = NewOrderCmd()
+
+    def _remove(self, nameList, **kwargs):
+        """Remove items from menuUI.
+           overwrite method.
+        """
+        for name in nameList:
+            for item in pm.lsUI():
+                if item.endswith(name):
+                    pm.deleteUI(item)
+    
+    def addCmdToMenu(self, commands, menu, dividerName='_menuDivider'):
+        for item in commands:
+            name    = item['name']
+            label   = item['label']
+            command = item['command']
+
+            if dividerName in name:
+                name = '{}_{}'.format(getLast(menu.split('|')), name)
+                pm.menuItem(name, parent=menu, divider=True, dividerLabel=label)
+            else:
+                name = '{}_{}'.format(getLast(menu.split('|')), name)
+                pm.menuItem(name, parent=menu, label=label, command=command)
 
     def createMenuCmd(self):
         """Create menu commands in channelBox.
@@ -60,9 +97,12 @@ class CustomMenuItems(attribute.MenuItems):
 
         ]
 
-        self.removeItem(['divider'])
-        self.removeItem([item['name'] for item in edit_menuitems])
+        #init
+        self._remove(['divider'])
+        self._remove([item['name'] for item in edit_menuitems])
+        self._remove([item['name'] for item in channels_menuitems])
 
+        #add
         self.addCmdToMenu(channels_menuitems, self.cbMenu)
         self.addCmdToMenu(edit_menuitems, self.editMenu)
         self.addCmdToMenu(channels_menuitems, self.cbPopup)
@@ -70,11 +110,11 @@ class CustomMenuItems(attribute.MenuItems):
         self.addCmdToMenu(edit_menuitems, self.mainModMenu)
 
 
-class NewOrderCmd(cmdModule.CmdModule):
+class NewOrderCmd(mod.CmdModule):
 
     def __init__(self, *args, **kwargs):
         super(NewOrderCmd, self).__init__(*args, **kwargs)
-        self.cmd = mirrorage.tools.attribute.attribute.AttributeModules()
+        self.cmd = att.AttributeModules()
         self.copyData = None
         self.copyMode = None
     
@@ -118,15 +158,15 @@ class NewOrderCmd(cmdModule.CmdModule):
         pm.select(tarItem)
     
     def execute(self, *args):
-        mi = MenuItems()
+        mi = NewOrder()
         mi.createMenuCmd()
 
 
 '''
-import mirrorage.tools.attribute.newOrder as no
-reload( mirrorage.tools.attribute.newOrder)
-import mirrorage.tools.attribute.attribute
-reload( mirrorage.tools.attribute.attribute)
+import psychoid.tools.attribute.newOrder as no
+reload(no)
+import psychoid.modules.attribute as att
+reload(att)
 
 a = no.NewOrderCmd()
 a.execute()

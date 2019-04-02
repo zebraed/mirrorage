@@ -19,8 +19,8 @@ import pymel.core as pm
 import maya.OpenMaya as om
 from maya import OpenMayaUI
 
-from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
-from mirrorage.tools import *
+from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
+from psychoid.tools import *
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
@@ -92,7 +92,7 @@ class BaseWidget(QtWidgets.QMainWindow):
             qss_file.open(QtCore.QFile.ReadOnly)
             self.setStyleSheet(str(qss_file.readAll().data()))    
         
-        #self.setting_file = os.path.join(os.getenv('MAYA_APP_DIR'), 'mirrorage_windowPref.ini')
+        #self.setting_file = os.path.join(os.getenv('MAYA_APP_DIR'), 'psychoid_windowPref.ini')
         #self.pyside_setting = QtCore.QSettings(self.setting_file, QtCore.QSettings.IniFormat)
         #self.pyside_setting.setIniCodec('utf-8')
 

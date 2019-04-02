@@ -18,5 +18,5 @@ import os
 
 def reload():
     for k in sys.modules.keys():
-        if k.find('mirrorage') > -1:
+        if k.find('psychoid') > -1:
             del sys.modules[k]

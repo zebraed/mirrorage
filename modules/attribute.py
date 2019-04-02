@@ -24,14 +24,14 @@ from collections import OrderedDict
 from collections import Mapping
 import itertools
 
-from mirrorage.qtpy.Qt import QtCore, QtGui, QtWidgets
+from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
 from .. import cmdModule as cmdModule
 
-from mirrorage.tools import *
+from psychoid.tools import *
 
 ############################
-# attribute utilitu module # 
+# attribute utility module # 
 ############################
 
 
@@ -160,6 +160,13 @@ class AttributeModules(cmdModule.CmdModule):
         if not attrs:
             return []
         return attrs
+
+    @classmethod
+    def selectAttr(cls, attributes, nodes):
+        toSel = [ '{}.{}'.format(n, a) for a in attributes for n in nodes ]
+        pm.select(nodes, r=1)
+        strCmd = "import pymel.core as pm\npm.channelBox('mainChannelBox', e=1, select={}, update=1)"
+        pm.evalDeferred(strCmd.format(toSel))
     
     @classmethod
     def getAllUserAttrs(cls, node):
@@ -172,13 +179,6 @@ class AttributeModules(cmdModule.CmdModule):
     @classmethod
     def getAttrConnection(cls, srcAttr):
         return { 'inputs': srcAttr.inputs(p=True), 'outputs':srcAttr.outputs(p=True) }
-    
-    @classmethod
-    def selectAttr(cls, attributes, nodes):
-        toSel = [ '{}.{}'.format(n, a) for a in attributes for n in nodes ]
-        pm.select(nodes, r=1)
-        strCmd = "import pymel.core as pm\npm.channelBox('mainChannelBox', e=1, select={}, update=1)"
-        pm.evalDeferred(strCmd.format(toSel))
     
     @classmethod
     def moveUpAttr(cls, *args):
@@ -281,6 +281,12 @@ class AttributeModules(cmdModule.CmdModule):
                         cls.shared_connection(attribute, attrOutput)
                     else:
                         attribute.connect(attrOutput)
+
+    def saveConnectInfo(cls, attribute, **kwargs):
+        for attrInput, attrOutput in zip(attribute.inputs(), attribute.outputs()):
+            conDic= {attribute : {'input': [attrInput], 'output':attrOutput},
+              }
+
 
     @classmethod
     def sharedConnection(cls, srcAttr, tarAttr):

@@ -13,17 +13,23 @@ from __future__ import unicode_literals
 from future_builtins import map
 from future_builtins import filter
 
-from mirrorage.tools import *
+from maya import cmds
 
-"""
-.
-└── tools
-    ├── animation
-    └── attribute
-        ├── __init__.py
-        ├── attribute.py
-        ├── attributeSplatter.py
-        ├── menuItem.py
-        └── newOrder.py
+import sys
+import os
 
-"""
+from . import markingMenu
+
+def reload():
+    for k in sys.modules.keys():
+        if k.find('psychoid') > -1:
+            del sys.modules[k]
+
+
+def rebuildMarkingMenu(*args):
+    """rebuilds our marking menu
+    """
+    cmds.evalDeferred("""
+    reload(markingMenu)
+    markingMenu.MarkingMenu()
+    """)

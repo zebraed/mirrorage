@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true,
+		"editor.fontFamily": " 'Ricty-Regular' ,Consolas, 'Courier New',' monospace'"
+	}
+}

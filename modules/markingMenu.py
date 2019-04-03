@@ -25,15 +25,14 @@ MENU_NAME = "markingMenu"
 class MarkingMenu(menuItems.MenuItems):
 
     def __init__(self, *args, **kwargs):
-        super(MarkingMenu, self).__init__(*args, **kwargs)
-        #self._remove()
-        #self._build()
+        pass
     
 
     def _build(self):
         """Creates the marking menu context and call.
         """
-        menu = pm.popupMenu(MENU_NAME, mm  = 1,
+        menu = pm.popupMenu(MENU_NAME,
+                                     mm  = 1,
                                      b   = 2,
                                      aob = 1,
                                      ctl = 1,
@@ -41,7 +40,7 @@ class MarkingMenu(menuItems.MenuItems):
                                      sh  = 0,
                                      p   = 'viewPanes',
                                      pmo = 1,
-                                     ppm = self._buildMarkingMenu,
+                                     pmc = self._buildMarkingMenu,
                                      )
     
     

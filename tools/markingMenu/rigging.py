@@ -29,6 +29,7 @@ class RiggingMarkingMenu(markingMenu.MarkingMenu):
         super(RiggingMarkingMenu, self).__init__(*args, **kwargs)
         self._remove()
         self._build()
+        print('Done!')
     
     def _buildMarkingMenu(self, commands, menu, parent, **kwargs):
         """this is where all the elements of the marking menu our built.
@@ -37,6 +38,11 @@ class RiggingMarkingMenu(markingMenu.MarkingMenu):
         # Radial positioned
         pm.menuItem(p=menu, l="Smooth Skin", rp="N", c="mel.elav('SmoothBindSkin;')")
         pm.menuItem(p=menu, ob=1, c="mel.eval('SmoothBindSkinOptions;')")
+
+        constMenu = pm.menuItem(p=menu, l="Constraint", rp="E", subMenu=1)
+        pm.menuItem(p=constMenu, l="Parent Constraint", rp="N", c="pm.parentConstraint(pm.selected()[:-1], pm.selected()[-1], mo=1)")
+        pm.menuItem(p=constMenu, ob=1, c="mel.eval('ParentConstraintOptions;')")
+
         pm.menuItem(p=menu, l="North East Button", rp="NE", c="pm.circle()")
 
         #subMenu = pm.menuItem(p=menu, l="North Sub Menu", rp="N", subMenu=1)

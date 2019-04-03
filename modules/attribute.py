@@ -282,12 +282,6 @@ class AttributeModules(cmdModule.CmdModule):
                     else:
                         attribute.connect(attrOutput)
 
-    def saveConnectInfo(cls, attribute, **kwargs):
-        for attrInput, attrOutput in zip(attribute.inputs(), attribute.outputs()):
-            conDic= {attribute : {'input': [attrInput], 'output':attrOutput},
-              }
-
-
     @classmethod
     def sharedConnection(cls, srcAttr, tarAttr):
         preConnectAttr = get1st(tarAttr.inputs(p=1))

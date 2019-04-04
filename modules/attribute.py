@@ -25,10 +25,14 @@ from collections import Mapping
 import itertools
 
 from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
-from .. import widget as widget
-from .. import cmdModule as cmdModule
+from psychoid.modules import cmdModule as cmdModule
 
 from psychoid.tools import *
+
+try:
+    unicode
+except:
+    unicode = str
 
 ############################
 # attribute utility module # 
@@ -140,7 +144,7 @@ class AttributeModules(cmdModule.CmdModule):
             newAttr.unlock()
         
         #connectAttribute
-        srcConnections = convert_keys_to_string(srcConnections)
+        srcConnections      = convert_keys_to_string(srcConnections)
         srcChildConnections = convert_keys_to_string(srcChildConnections)
 
         cls.connectAttr(newAttr, inputs=srcConnections['inputs'], outputs=srcConnections['outputs'])

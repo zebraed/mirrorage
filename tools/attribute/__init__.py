@@ -14,16 +14,3 @@ from future_builtins import map
 from future_builtins import filter
 
 from mirrorage.tools import *
-
-"""
-.
-└── tools
-    ├── animation
-    └── attribute
-        ├── __init__.py
-        ├── attribute.py
-        ├── attributeSplatter.py
-        ├── menuItem.py
-        └── newOrder.py
-
-"""

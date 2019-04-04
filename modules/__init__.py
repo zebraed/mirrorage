@@ -20,12 +20,6 @@ import os
 
 from . import markingMenu
 
-def reload():
-    for k in sys.modules.keys():
-        if k.find('psychoid') > -1:
-            del sys.modules[k]
-
-
 def rebuildMarkingMenu(*args):
     """rebuilds our marking menu
     """

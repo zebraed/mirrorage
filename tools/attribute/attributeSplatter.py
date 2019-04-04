@@ -25,6 +25,8 @@ import json
 from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
 from psychoid.tools import *
+import psychoid.modules.attribute as att
+att = att.AttributeModules
 
 
 try:
@@ -44,67 +46,15 @@ class cmd(object):
             node = get1st(pm.selected())
         if at == '':
             allUser = True
+        node = getPy(node)
 
         userDefAttrDic = OrderedDict()
         if allUser:
             userAttrs = pm.listAttr(node, ud=1)
             print( '### ' + node + ' ###' )
             for ua in userAttrs:
-                userDefAttrDic[ua] = cls.getAttrDict(node, ua)
+                userDefAttrDic[ua] = att.getAttrDict(node.attr(ua))
         return userDefAttrDic
-
-    @classmethod
-    def getAttrDict(cls, node, at,  *args, **kwargs):
-        """Get attribute params and shaping to dictonary.
-        """
-        node = getPy(node)
-
-        attrDic = OrderedDict()
-        attrDic["ln"] = node.attr(at).attrName(longName=1)
-
-        if pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), sn=True) != None:
-            attrDic["sn"] = pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), sn=True)
-        
-        if pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), nn=True) != None:
-            attrDic["nn"] = pm.attributeQuery(node.attr(at).name().split(".")[1], n=node.name(), nn=True)
-
-
-        attrDic["type"] = node.attr(at).type()
-
-        if node.attr(at).isKeyable():
-            attrDic["k"] = 1
-        else:
-            attrDic["k"] = 0
-        
-        if node.attr(at).isInChannelBox():
-            attrDic["cb"] = 1
-        else:
-            attrDic["cb"] = 0
-
-        if node.attr(at).isLocked():
-            attrDic['l'] = 1
-        else:
-            attrDic['l'] = 0
-
-        if node.attr(at).type() == "string":
-            attrDic["attrflag"] = "dt"
-        else:
-            attrDic["attrflag"] = "at"
-
-        if isNumericAttr(node.attr(at).type()):
-            if node.attr(at).getMin() != None:
-                attrDic["min"] = node.attr(at).getMin()
-            if node.attr(at).getMax() != None:
-                attrDic["max"] = node.attr(at).getMax()
-            defaultVal    = pm.attributeQuery(node.attr(at).name().split(".")[1] , n=node.attr(at).name() , listDefault=1)
-            attrDic["dv"] = get1st(defaultVal, default=0)
-
-        if node.attr(at).type() == "enum":
-            attrDic["enum"] = ":".join(node.attr(at).getEnums().keys())
-                
-        attrDic['value'] = cmds.getAttr(node.name()+ '.' + at)
-        print(' export attribute... : ' + at)
-        return attrDic
     
     @classmethod
     def exportAttrsToJson(cls, dictonary, **kwargs):
@@ -114,7 +64,7 @@ class cmd(object):
 
     @classmethod
     def importJsonToAttrs(cls, path, **kwargs):
-        """import json file and decode orderDict.
+        """import json file and decode orderedDict.
         """
         f = open(path, 'r')
         s = f.read()
@@ -149,180 +99,32 @@ class cmd(object):
             fw.close()
 
     @classmethod
-    def setAddAttrs(cls, attributeDicts, node, _set=True, add=True, value=True, *args, **kwargs):
+    def setAddAttrs(cls, attributeDicts, node, _set=True, add=True, *args, **kwargs):
         """Set & add attrs from attribute dictonary member.
         """
-
-        def _addDictAttr(node, value, attrflag, k, ln, _type, sn , nn, cb, **kwargs):
-            _max   = getFlag(kwargs, ['maxVale', '_max'],    None)
-            _min   = getFlag(kwargs, ['minValue', '_min'],   None)
-            dv     = getFlag(kwargs, ['defaultValue', 'dv'], None)
-            enum   = getFlag(kwargs, ['_enumerate', 'enum'], None)
-
-            attrName = ln
-            
-            if attrflag == 'at':
-                if isNumericAttr(_type):
-                    pm.addAttr(node,
-                            ln  = ln,
-                            at  = _type,
-                            dv  = dv,
-                            k   = k,
-                            min = _min,
-                            max = _max,
-                            sn  = sn,
-                            nn  = nn,
-                            )
-                
-                elif _type == 'enum':
-                    pm.addAttr(node,
-                            ln   = ln,
-                            at   = _type,
-                            en   = enum,
-                            k    = k,
-                            sn   = sn,
-                            nn   = nn,
-                            )
-                else:
-                    pm.addAttr(node,
-                            ln  = ln,
-                            at  = _type,
-                            k   = k,
-                            sn  = sn,
-                            nn  = nn,
-                            )
-
-            elif attrflag == 'dt':
-                pm.addAttr(node,
-                        ln = ln,
-                        dt = _type,
-                        k  = k,
-                        sn = sn,
-                        nn = nn,
-                        )
-            if value:
-                pm.setAttr(node.name() + '.' + attrName,
-                        value
-                        )
-            if not k:
-                if cb:
-                    pm.setAttr(node.name() + '.' + attrName,
-                            cb=cb
-                            )
-
-        def _setDictAttr(node, value, cb, k, ln, l, **kwargs):
-
-            nodeAt = node.name() + '.' + ln
-
-            pm.setAttr(nodeAt, value,
-                    cb  = cb,
-                    k   = k,
-                    l   = l,
-                    )
-
         node = getPy(node)
-        s = attributeDicts
-
-        attrNames = [ an for an in s.keys() ]
-
-        for attrName in attrNames:
-            attrsDict = s[attrName]
-
-            value     = attrsDict['value']
-
-            attrflag  = attrsDict['attrflag']
-
-            k         = attrsDict['k']
-
-            l         = attrsDict['l']
-
-            cb        = attrsDict['cb']
-
-            ln        = attrsDict['ln']
-
-            _type     = attrsDict['type']
-
-            try:
-                sn    = attrsDict['sn']
-            except:
-                sn    = ln
-
-            try:
-                nn    = attrsDict['nn']
-            except:
-                nn    = sn
-            
-            try:
-                enum  = attrsDict['enum']
-            except:
-                enum  = None
-
-            if isNumericAttr(_type):
-                _max  = attrsDict['max']
-
-                _min  = attrsDict['min']
-
-                dv    = attrsDict['dv']
-
+        for k in attributeDicts.keys():
             if add:
-                if attrflag == 'at':
-                    if isNumericAttr(_type):
-                        _addDictAttr(node,
-                                    value    = value,
-                                    ln       = ln,
-                                    attrflag = attrflag,
-                                    dv       = dv,
-                                    k        = k,
-                                    _min     = _min,
-                                    _max     = _max,
-                                    _type    = _type,
-                                    sn       = sn,
-                                    nn       = nn,
-                                    cb       = cb,
-                                    )
-                    elif enum:
-                        _addDictAttr(node,
-                                    value    = value,
-                                    ln       = ln,
-                                    attrflag = attrflag,
-                                    enum     = enum,
-                                    k        = k,
-                                    _type    = _type,
-                                    sn       = sn,
-                                    nn       = nn,
-                                    cb       = cb,
-                                    )
-                    else:
-                        _addDictAttr(node,
-                                    value    = value,
-                                    ln       = ln,
-                                    attrflag = attrflag,
-                                    k        = k,
-                                    _type    = _type,
-                                    sn       = sn,
-                                    nn       = nn,
-                                    cb       = cb,
-                                    )
-
-                elif attrflag == 'dt':
-                    _addDictAttr(node,
-                                value    = value,
-                                ln       = ln,
-                                attrflag = attrflag,
-                                k        = k,
-                                _type    = _type,
-                                sn       = sn,
-                                nn       = nn,
-                                cb       = cb,
-                                )
+                attributeDicts = convert_keys_to_string(attributeDicts)
+                attrName = attributeDicts[k]['ln']
+                pm.addAttr(node, **attributeDicts[attrName])
 
             if _set:
-                _setDictAttr(node,
-                            value    = value,
-                            ln       = ln,
+                if attributeDicts[k]['hidden']:
+                    cb = 0
+                else:
+                    cb = 1
+
+                if attributeDicts[k]['keyable']:
+                    k = 1
+                    l = 0
+                else:
+                    k = 0
+                    l = 1
+
+                pm.setAttr(node.attr(attributeDicts[k]['ln']),
                             l        = l,
                             k        = k,
-                            _type    = _type,
                             cb       = cb,
                             )
 

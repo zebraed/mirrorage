@@ -140,7 +140,10 @@ class AttributeModules(cmdModule.CmdModule):
             newAttr.unlock()
         
         #connectAttribute
-        cls.connectAttr(newAttr, **srcConnections)
+        srcConnections = convert_keys_to_string(srcConnections)
+        srcChildConnections = convert_keys_to_string(srcChildConnections)
+
+        cls.connectAttr(newAttr, inputs=srcConnections['inputs'], outputs=srcConnections['outputs'])
         #if compound, child connect
         if srcCompoundState:
             for attrChild, attrKey in zip(newAttr.getChildren(), sorted(srcChildConnections.keys() ) ):
@@ -275,12 +278,11 @@ class AttributeModules(cmdModule.CmdModule):
                 else:
                     attrInput.connect(attribute)
         if outputs:
-            if isNumericAttr(attribute.type()):
-                for attrOutput in outputs:
-                    if attrOutput.inputs(p=1):
-                        cls.shared_connection(attribute, attrOutput)
-                    else:
-                        attribute.connect(attrOutput)
+            for attrOutput in outputs:
+                if attrOutput.inputs(p=1):
+                    cls.shared_connection(attribute, attrOutput)
+                else:
+                    attribute.connect(attrOutput)
 
     @classmethod
     def sharedConnection(cls, srcAttr, tarAttr):
@@ -322,8 +324,43 @@ class AttributeModules(cmdModule.CmdModule):
         d_data['keyable']    = True
         d_data['enumName']   = (str('-'* 15))
         cls.createAttr(item, d_data)
-    
+        pm.setAttr(d_data['ln'], k=0, cb=1, l=1)
+
+    @classmethod
     def unlockAttrs(self, *args):
         for item in pm.selected():
             for attr in itertools.product(['t', 'r', 's'], ['x', 'y', 'z']):
                 item.attr(''.join(attr)).unlock()
+    
+    @classmethod
+    def lockAttrs(self, *args):
+        for item in pm.selected():
+            for attr in itertools.product(['t', 'r', 's'], ['x', 'y', 'z']):
+                item.attr(''.join(attr)).lock()
+
+    @classmethod
+    def refreezeAttrs(self, t=1, r=0, s=0, *args):
+        pass
+    
+    @classmethod
+    def connectSameUserAttrs(src, dest, **kwargs):
+        """Connect same user define attribute in selected twice node.
+
+            Args:
+        """
+        src  = getPy(src)
+        dest = getPy(dest)
+        srcUserAttr  = set(pm.listAttr(src,ud=True))
+        destUserAttr = set(pm.listAttr(dest,ud=True))
+        sameAttrs = list(srcUserAttr & destUserAttr)
+
+        if not sameAttrs:
+            pm.warning('same attribute is not found.')
+            return False
+
+        try:
+            for sa in sameAttrs:
+                src.attr(sa) >> dest.attr(sa)
+            return True
+        except:
+            return False

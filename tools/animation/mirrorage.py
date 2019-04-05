@@ -28,8 +28,6 @@ from collections import OrderedDict
 
 from .. import widget
 
-__mod__ = (widget)
-( reload(_m) for _m in __mod__ )
 
 #mirror table
 RE_LEFT_SIDE  = 'Lf|lf_|_lf|_l_|_L|L_|left|Left'

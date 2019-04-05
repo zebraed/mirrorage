@@ -13,4 +13,4 @@ from __future__ import unicode_literals
 from future_builtins import map
 from future_builtins import filter
 
-from mirrorage.tools import *
+from psychoid.tools import *

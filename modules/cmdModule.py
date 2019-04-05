@@ -16,8 +16,9 @@ from future_builtins import filter
 from abc import ABCMeta, abstractmethod
 
 
-class CmdModule(ABCMeta):
+class CmdModule(object):
     name = 'command module'
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def execute(self, *args):

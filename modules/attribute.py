@@ -25,7 +25,6 @@ from collections import Mapping
 import itertools
 
 from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
-from psychoid.modules import cmdModule as cmdModule
 
 from psychoid.tools import *
 
@@ -39,7 +38,7 @@ except:
 ############################
 
 
-class AttributeModules(cmdModule.CmdModule):
+class AttributeModules(object):
     
     @classmethod
     def getAttrDict(cls, attribute):
@@ -173,7 +172,10 @@ class AttributeModules(cmdModule.CmdModule):
         toSel = [ '{}.{}'.format(n, a) for a in attributes for n in nodes ]
         pm.select(nodes, r=1)
         strCmd = "import pymel.core as pm\npm.channelBox('mainChannelBox', e=1, select={}, update=1)"
-        pm.evalDeferred(strCmd.format(toSel))
+        try:
+            pm.evalDeferred(strCmd.format(toSel))
+        except:
+            pass
     
     @classmethod
     def getAllUserAttrs(cls, node):
@@ -226,6 +228,7 @@ class AttributeModules(cmdModule.CmdModule):
                         return
         cls.selectAttr(selAttrs, selItems)
 
+
     @classmethod
     def moveDownAttr(cls, *args):
         selAttrs = cls.getSelectedAttrs()
@@ -263,7 +266,8 @@ class AttributeModules(cmdModule.CmdModule):
                     if not res:
                         return
         cls.selectAttr(selAttrs, selItems)
-    
+
+
     @classmethod
     def createAttr(cls, node, attrData):
         attrName = attrData['ln']
@@ -322,22 +326,22 @@ class AttributeModules(cmdModule.CmdModule):
         
         d_data               = OrderedDict()
         d_data['ln']         = str(fullname)
-        d_data['type']       = 'enum'
+        d_data['attributeType']       = 'enum'
         d_data['nn']         = str(' ')
         d_data['hidden']     = False
         d_data['keyable']    = True
         d_data['enumName']   = (str('-'* 15))
         cls.createAttr(item, d_data)
-        pm.setAttr(d_data['ln'], k=0, cb=1, l=1)
+        #pm.setAttr(item.attr(d_data['ln']), k=0, cb=1, l=1)
 
     @classmethod
-    def unlockAttrs(self, *args):
+    def unlockAttrs(cls, *args):
         for item in pm.selected():
             for attr in itertools.product(['t', 'r', 's'], ['x', 'y', 'z']):
                 item.attr(''.join(attr)).unlock()
     
     @classmethod
-    def lockAttrs(self, *args):
+    def lockAttrs(cls, *args):
         for item in pm.selected():
             for attr in itertools.product(['t', 'r', 's'], ['x', 'y', 'z']):
                 item.attr(''.join(attr)).lock()
@@ -347,24 +351,23 @@ class AttributeModules(cmdModule.CmdModule):
         pass
     
     @classmethod
-    def connectSameUserAttrs(src, dest, **kwargs):
+    def connectSameUserAttrs(cls, **kwargs):
         """Connect same user define attribute in selected twice node.
 
             Args:
         """
-        src  = getPy(src)
-        dest = getPy(dest)
-        srcUserAttr  = set(pm.listAttr(src,ud=True))
-        destUserAttr = set(pm.listAttr(dest,ud=True))
+        src = pm.selected()[0]
+        dest = pm.selected()[1]
+
+        srcUserAttr  = set(cmds.listAttr(src.name(),ud=True))
+        destUserAttr = set(cmds.listAttr(dest.name(),ud=True))
         sameAttrs = list(srcUserAttr & destUserAttr)
 
         if not sameAttrs:
             pm.warning('same attribute is not found.')
-            return False
+            return
 
         try:
             for sa in sameAttrs:
                 src.attr(sa) >> dest.attr(sa)
-            return True
-        except:
-            return False
+        except:pass

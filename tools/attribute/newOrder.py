@@ -26,24 +26,28 @@ from functools import partial
 
 from psychoid.qtpy.Qt import QtCore, QtGui, QtWidgets
 from .. import widget as widget
-import psychoid.modules as mod
-import psychoid.modules.attribute as att
+import psychoid.modules.cmdModule as mod
+import psychoid.modules.menuItems as mi
+from psychoid.modules import attribute as att
 from psychoid.tools import *
 
 
 
-class NewOrder(att.MenuItems):
+class NewOrder(mi.MenuItems):
     
     def __init__(self, *args, **kwargs):
         super(NewOrder, self).__init__(*args, **kwargs)
 
-        if self.maya_ver > 2015:
-            self.cbMenu   = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu2'
-            self.editMenu = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu3'
-            self.cbPopup  = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|frameLayout1|mainChannelBox|popupMenu1'
+        if self.maya_ver > 2016:
+            self.cbMenu      = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu2'
+            self.editMenu    = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu3'
+            self.cbPopup     = 'ChannelBoxLayerEditor|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|frameLayout1|mainChannelBox|popupMenu1'
             self.mainModMenu = 'MayaWindow|mainModifyMenu'
         else:
-            pass
+            self.cbMenu      = 'MayaWindow|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu2'
+            self.editMenu    = 'MayaWindow|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|menu3'
+            self.cbPopup     = 'MayaWindow|MainChannelsLayersLayout|ChannelsLayersPaneLayout|ChannelBoxForm|menuBarLayout1|frameLayout1|mainChannelBox|popupMenu1'
+            self.mainModMenu = 'MayaWindow|mainModifyMenu'
 
         mel.eval('generateChannelMenu {} 0;'.format(self.cbMenu))
         mel.eval('generateCBEditMenu  {} 0;'.format(self.editMenu))
@@ -79,8 +83,11 @@ class NewOrder(att.MenuItems):
         """Create menu commands in channelBox.
         """
         channels_menuitems = [
-            {'name': 'cb_menuDivider', 'label': '',                  'command': None},
-            {'name': 'unlock_trs',     'label': 'Unlock Transforms', 'command': self.cmd.unlockAttrs},
+            {'name': 'cb_menuDivider',        'label': '',                         'command': None},
+            {'name': 'unlock_trs',            'label': 'Unlock Transforms',        'command': self.cmd.unlockAttrs},
+            {'name': 'lock_trs',              'label': 'Lock Transforms',          'command': self.cmd.lockAttrs},
+            {'name': 'connect_menuDivider',   'label': 'Connect Attributes',       'command': None},
+            {'name': 'connect_same_userAttrs','label': 'Connect Same User Attrs',  'command': self.cmd.connectSameUserAttrs},
         ]
 
         edit_menuitems = [
@@ -94,7 +101,6 @@ class NewOrder(att.MenuItems):
             {'name': 'cbf_attrCopy',     'label': 'Copy Attr',             'command': self.newOrder.copyAttribute},
             {'name': 'cbf_attrPaste',    'label': 'Paste Attr',            'command': self.newOrder.pasteAttr},
             {'name': 'export_menuDivider', 'label': '',                    'command': None},
-
         ]
 
         #init
@@ -112,8 +118,7 @@ class NewOrder(att.MenuItems):
 
 class NewOrderCmd(mod.CmdModule):
 
-    def __init__(self, *args, **kwargs):
-        super(NewOrderCmd, self).__init__(*args, **kwargs)
+    def __init__(self):
         self.cmd = att.AttributeModules()
         self.copyData = None
         self.copyMode = None
@@ -133,7 +138,7 @@ class NewOrderCmd(mod.CmdModule):
         allSelAttr = self.cmd.getSelectedAttrs()
 
         if not allSelAttr:
-            pn.displayWarning('No attribute selected.')
+            pm.displayWarning('No attribute selected.')
             return
         
         allUserAttrs = self.cmd.getAllUserAttrs(srcItem)
@@ -156,18 +161,31 @@ class NewOrderCmd(mod.CmdModule):
             self.cmd.copyAttr(srcItem, tarItem, attr, move=moveAttr)
         
         pm.select(tarItem)
+
+    def connectSameUserAttrs(self, src='', dest='', **kwargs):
+        """Connect same user define attribute in selected twice node.
+
+            Args:
+        """
+        if src == '':
+            src = pm.selected()[0]
+        if dest == '':
+            dest = pm.selected()[1]
+
+        srcUserAttr  = set(cmds.listAttr(src.name(),ud=True))
+        destUserAttr = set(cmds.listAttr(dest.name(),ud=True))
+        sameAttrs = list(srcUserAttr & destUserAttr)
+
+        if not sameAttrs:
+            pm.warning('same attribute is not found.')
+            return
+
+        try:
+            for sa in sameAttrs:
+                src.attr(sa) >> dest.attr(sa)
+        except:pass
+
     
     def execute(self, *args):
-        mi = NewOrder()
-        mi.createMenuCmd()
-
-
-'''
-import psychoid.tools.attribute.newOrder as no
-reload(no)
-import psychoid.modules.attribute as att
-reload(att)
-
-a = no.NewOrderCmd()
-a.execute()
-'''
+        newOrder = NewOrder()
+        newOrder.createMenuCmd()
